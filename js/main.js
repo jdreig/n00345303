@@ -1021,7 +1021,8 @@ if ('webkitSpeechRecognition' in window) {
                 isListening = true;
                 btnMic.classList.add('listening');
                 highlightField("mic");
-                showCaption("Activando micrófono...");
+                showCaption("Activando micrófono..."); // Muestra el caption inmediatamente
+
                 noSpeechCount = 0; // Resetear contador al activar
                 speechDetectedInSession = false; // Resetear al iniciar nueva sesión
 
@@ -1035,8 +1036,9 @@ if ('webkitSpeechRecognition' in window) {
     // Evento que se dispara cuando el reconocimiento de voz ha comenzado a escuchar audio.
     recognition.onaudiostart = function() {
         console.log("Audio capturado por el reconocimiento.");
-        if (isListening && !window.speechSynthesis.speaking) {
-            speakText("Escuchando. Diga 'comandos' para ayuda, o lo que desea realizar.", false);
+        // Solo muestra el caption, NO LLAMA A speakText aquí para evitar interferencias iniciales.
+        if (isListening) {
+            showCaption("Escuchando. Diga 'comandos' para ayuda, o lo que desea realizar.");
         }
     };
 
@@ -1590,10 +1592,12 @@ if ('webkitSpeechRecognition' in window) {
         }
     };
 
-    recognition.onend = function() {
-        console.log("Reconocimiento terminó (onend). isListening:", isListening, "speechDetectedInSession:", speechDetectedInSession);
+    recognition.onend = function(event) {
+        console.log("Reconocimiento terminó (onend). isListening:", isListening, "speechDetectedInSession:", speechDetectedInSession, "event.error:", event ? event.error : 'N/A');
         if (isListening) {
-            if (!speechDetectedInSession) {
+            // Si el reconocimiento terminó y no fue por un error específico o por detección de voz
+            // y no estamos en una confirmación activa, intentamos reiniciar.
+            if (!speechDetectedInSession && !waitingForConfirmation) {
                 noSpeechCount++;
                 console.log(`No se detectó voz. Intentos restantes: ${maxNoSpeechAttempts - noSpeechCount}`);
                 if (noSpeechCount >= maxNoSpeechAttempts) {
@@ -1607,20 +1611,23 @@ if ('webkitSpeechRecognition' in window) {
                     return; // No reiniciar automáticamente
                 } else {
                     showCaption("No se detectó voz. Reanudando micrófono...");
-                    speakText("No se detectó voz. Reanudando micrófono...");
+                    // No hablar aquí, solo mostrar caption
                 }
             } else {
-                noSpeechCount = 0; // Resetear si hubo voz
+                noSpeechCount = 0; // Resetear si hubo voz o si terminó por un comando
                 speechDetectedInSession = false; // Resetear para la próxima sesión
             }
 
             // Reanudar el reconocimiento después de un breve retraso
-            setTimeout(() => {
-                audioContext.resume().then(() => {
-                    recognition.start();
-                    console.log("Reconocimiento reiniciado desde onend.");
-                }).catch(e => console.error("Error al reanudar AudioContext en onend:", e));
-            }, 500); // Pequeño retraso para evitar ciclos rápidos
+            // Solo si isListening sigue siendo true (no se desactivó por maxNoSpeechAttempts)
+            if (isListening) {
+                setTimeout(() => {
+                    audioContext.resume().then(() => {
+                        recognition.start();
+                        console.log("Reconocimiento reiniciado desde onend.");
+                    }).catch(e => console.error("Error al reanudar AudioContext en onend:", e));
+                }, 500); // Pequeño retraso para evitar ciclos rápidos
+            }
         } else {
             // Si isListening es false, el usuario lo desactivó manualmente o se detuvo por un error grave
             if (btnMic) btnMic.classList.remove('listening');
@@ -1633,6 +1640,7 @@ if ('webkitSpeechRecognition' in window) {
         console.error("Error de reconocimiento de voz:", event.error);
         if (waitingForConfirmation) {
             console.warn("Error de reconocimiento durante confirmación, la lógica de confirmación lo reintentará.");
+            // No reiniciar aquí, la lógica de confirmación se encarga
             return; 
         }
 
@@ -1651,7 +1659,7 @@ if ('webkitSpeechRecognition' in window) {
         } else if (event.error === 'aborted') {
             // Aborted puede ocurrir por varias razones, a menudo es seguro reintentar
             if (isListening) {
-                showCaption("Reconocimiento de voz pausado. Reanudando...");
+                showCaption("Reconocimiento de voz pausado. Reanudando..."); // Solo caption
                 setTimeout(() => {
                     audioContext.resume().then(() => {
                         recognition.start();
@@ -1659,7 +1667,7 @@ if ('webkitSpeechRecognition' in window) {
                 }, 500);
             }
         } else {
-            showCaption("Error de reconocimiento de voz: " + event.error + ". Reanudando...");
+            showCaption("Error de reconocimiento de voz: " + event.error + ". Reanudando..."); // Solo caption
             speakText("Error de reconocimiento de voz: " + event.error + ". Reanudando...");
             if (isListening) {
                 setTimeout(() => {
