@@ -2,9 +2,10 @@
 let guideActive = false;
 let recognition = null;
 let isListening = false;
-let currentField = null; // Para dictado de campos de formulario (en index.html)
+let currentField = null; // Para dictado de campos de formulario (en index.html o modal)
 let waitingForConfirmation = false; // Para confirmaciones de borrar/mantener, etc.
 let originalOnResult = null; // Para guardar el onresult principal durante confirmaciones
+let currentVisitIdInModal = null; // *** NUEVA VARIABLE: ID de la visita actualmente en el modal ***
 
 // Nuevas variables para manejo de errores de voz en móvil
 let noSpeechCount = 0;
@@ -31,13 +32,19 @@ const userInput = document.getElementById('username');
 const passInput = document.getElementById('password');
 const btnLogin = document.getElementById('btnLogin');
 const btnRecover = document.getElementById('btnRecover');
-const loginForm = document.getElementById('loginForm'); // *** NUEVA REFERENCIA ***
+const loginForm = document.getElementById('loginForm'); 
 
 // Referencia al botón de cerrar sesión (estará en todas las páginas con nav)
 const logoutBtn = document.getElementById('logoutBtn');
 
 // --- Variables y referencias específicas del Calendario/Programaciones ---
 const programCardsContainer = document.getElementById('program-cards-container'); // Contenedor para las tarjetas de programación
+// Referencias para los nuevos campos del modal de visitas
+const visitDetailModal = document.getElementById('visitDetailModal');
+const visitObservationsInput = document.getElementById('visitObservationsInput');
+const visitStatusSelect = document.getElementById('visitStatusSelect');
+const saveVisitChangesBtn = document.getElementById('saveVisitChangesBtn');
+
 
 // --- Variables y referencias específicas de Técnicos ---
 const technicianCardsContainer = document.getElementById('technician-cards-container'); // Contenedor para las tarjetas de técnicos
@@ -781,7 +788,7 @@ function speakGuide() {
     } else if (document.body.id === 'dashboard-page') {
         text = "Bienvenido al panel principal de PreySop. Aquí puede ver un resumen de sus servicios, citas, técnicos e instalaciones Starlink. Puede navegar usando los comandos de voz o los botones. Diga 'comandos' para ver la lista de comandos disponibles. Diga 'cerrar sesión' para volver a la pantalla de inicio. Puede activar modo oscuro, aumentar el tamaño del texto o restablecer accesibilidad con los botones flotantes. También puede decir 'mostrar' u 'ocultar' seguido del nombre de una sección para alternar su visibilidad, por ejemplo, 'ocultar resumen general'. Para escuchar estadísticas específicas, diga 'cuántos' o 'cuántas' seguido del nombre de la estadística, por ejemplo, 'cuántas citas próximas'.";
     } else if (document.body.id === 'calendar-page') { // Guía específica para programaciones
-        text = "Está en la sección de programaciones de visitas técnicas. Puede ver las programaciones organizadas por día. Haga clic en 'Ver Detalle' en cualquier programación para ver la información completa. Diga 'comandos' para ver las opciones. Diga 'cerrar sesión' para salir. Diga 'desactivar guía' para cerrar esta guía.";
+        text = "Está en la sección de programaciones de visitas técnicas. Puede ver las programaciones organizadas por día. Haga clic en 'Ver Detalle' en cualquier programación para ver la información completa. Diga 'comandos' para ver las opciones. Diga 'cerrar sesión' para salir. Diga 'desactivar guía' para cerrar esta guía. También puede decir 'dictar observación', 'cambiar estado a pendiente', 'cambiar estado a en progreso', 'cambiar estado a completado', 'cambiar estado a cancelado' y 'guardar cambios' si el modal de detalles de visita está abierto.";
     } else if (document.body.id === 'technicians-page') { // Guía específica para técnicos
         text = "Está en la sección de técnicos. Aquí puede ver la lista de nuestros técnicos con su información de contacto y especialidades. Diga 'comandos' para ver las opciones. Diga 'cerrar sesión' para salir. Diga 'desactivar guía' para cerrar esta guía.";
     } else if (document.body.id === 'tickets-page') { // Guía específica para tickets
@@ -825,6 +832,12 @@ function highlightField(field) {
     if (field === "contraseña" && passInput) passInput.classList.add('active-voice');
     if (field === "login" && btnLogin) btnLogin.classList.add('voice-highlight');
     if (field === "recover" && btnRecover) btnRecover.classList.add('voice-highlight');
+
+    // Específicos para el modal de detalles de visita (calendar.html)
+    if (field === "observaciones" && visitObservationsInput) visitObservationsInput.classList.add('active-voice');
+    if (field === "estado" && visitStatusSelect) visitStatusSelect.classList.add('voice-highlight');
+    if (field === "guardarCambiosVisita" && saveVisitChangesBtn) saveVisitChangesBtn.classList.add('voice-highlight');
+
 
     // Resaltar elementos de navegación
     if (field) {
@@ -1022,14 +1035,13 @@ if ('webkitSpeechRecognition' in window) {
                 isListening = true;
                 btnMic.classList.add('listening');
                 highlightField("mic");
-                showCaption("Activando reconocimiento de voz..."); // Mensaje más claro
+                showCaption("Activando reconocimiento de voz..."); 
 
                 noSpeechCount = 0; // Resetear contador al activar
                 speechDetectedInSession = false; // Resetear al iniciar nueva sesión
 
                 audioContext.resume().then(() => {
                     recognition.start();
-                    // Mensaje de activación explícito y en masculino
                     speakText("Reconocimiento de voz activado.");
                 }).catch(e => console.error("Error al resumir AudioContext en btnMic click:", e));
             }
@@ -1039,7 +1051,6 @@ if ('webkitSpeechRecognition' in window) {
     // Evento que se dispara cuando el reconocimiento de voz ha comenzado a escuchar audio.
     recognition.onaudiostart = function() {
         console.log("Audio capturado por el reconocimiento.");
-        // Solo muestra el caption, NO LLAMA A speakText aquí
         if (isListening) {
             showCaption("Escuchando. Diga 'comandos' para ayuda, o lo que desea realizar.");
         }
@@ -1055,7 +1066,6 @@ if ('webkitSpeechRecognition' in window) {
     // Evento que se dispara cuando la voz ha dejado de ser detectada.
     recognition.onspeechend = function() {
         console.log("Fin de la detección de voz.");
-        // No hacer nada aquí, el onresult o onend se encargarán del procesamiento.
     };
 
     // Este es el onresult PRINCIPAL que maneja TODOS los comandos de voz.
@@ -1065,7 +1075,6 @@ if ('webkitSpeechRecognition' in window) {
 
         for (let i = event.resultIndex; i < event.results.length; ++i) {
             if (event.results[i].isFinal) {
-                // *** CORRECCIÓN CLAVE AQUÍ: Usar event.results[i][0].transcript ***
                 finalTranscript += event.results[i][0].transcript; 
             } else {
                 interimTranscript += event.results[i][0].transcript;
@@ -1078,9 +1087,9 @@ if ('webkitSpeechRecognition' in window) {
             const transcript = finalTranscript.trim();
             const lower = transcript.toLowerCase();
 
-            console.log("Final Transcript (after correction):", transcript); // Log para depuración
-            console.log("Lower Transcript (after correction):", lower); // Log para depuración
-            console.log("Current Field (before processing):", currentField); // Log para depuración
+            console.log("Final Transcript:", transcript); 
+            console.log("Lower Transcript:", lower); 
+            console.log("Current Field:", currentField); 
 
             // Si estamos esperando una confirmación, el onresult temporal de waitForConfirmation
             // ya está activo. No procesamos aquí.
@@ -1091,8 +1100,8 @@ if ('webkitSpeechRecognition' in window) {
 
             // Detener cualquier síntesis de voz activa antes de procesar un nuevo comando.
             window.speechSynthesis.cancel(); 
-            noSpeechCount = 0; // Resetear el contador de no-speech si se procesa un comando final
-            speechDetectedInSession = true; // Asegurar que se marcó que hubo voz
+            noSpeechCount = 0; 
+            speechDetectedInSession = true; 
 
             // --- Lógica de Comandos Generalizada ---
             let commandHandled = false;
@@ -1107,7 +1116,7 @@ if ('webkitSpeechRecognition' in window) {
                     highlightField("usuario");
                     showCaption(`Usuario establecido: "${transcript}".`);
                     speakText(`Usuario establecido: "${transcript}".`);
-                    currentField = null; // Clear the field state after setting
+                    currentField = null; 
                     commandHandled = true;
                 } else if (currentField === "contraseña") {
                     if (passInput) {
@@ -1117,23 +1126,22 @@ if ('webkitSpeechRecognition' in window) {
                     highlightField("contraseña");
                     showCaption(`Contraseña establecida.`);
                     speakText(`Contraseña establecida.`);
-                    currentField = null; // Clear the field state after setting
+                    currentField = null; 
                     commandHandled = true;
                 } else if (lower === "usuario") {
                     if (userInput && userInput.value) {
                         waitForConfirmation(
                             `El campo usuario ya tiene: "${userInput.value}". ¿Desea borrarlo para dictar uno nuevo? Diga "borrar" o "no".`,
-                            () => { // onConfirm (borrar)
+                            () => { 
                                 if (userInput) userInput.value = "";
                                 if (userInput) userInput.focus();
                                 highlightField("usuario");
                                 showCaption("Campo usuario borrado. Diga el nombre de usuario.");
                                 speakText("Campo usuario borrado. Diga el nombre de usuario.");
-                                currentField = "usuario"; // Esperar dictado
+                                currentField = "usuario"; 
                             },
-                            () => { // onCancel (no borrar)
+                            () => { 
                                 showCaption("Contenido de usuario mantenido.");
-                                // speakText("Contenido de usuario mantenido."); // waitForConfirmation ya habla
                             }
                         );
                     } else {
@@ -1148,17 +1156,16 @@ if ('webkitSpeechRecognition' in window) {
                     if (passInput && passInput.value) {
                         waitForConfirmation(
                             "El campo contraseña ya tiene un valor. ¿Desea borrarlo para dictar uno nuevo? Diga 'borrar' o 'no'.",
-                            () => { // onConfirm (borrar)
+                            () => { 
                                 if (passInput) passInput.value = "";
                                 if (passInput) passInput.focus();
                                 highlightField("contraseña");
                                 showCaption("Campo contraseña borrado. Diga la contraseña.");
                                 speakText("Campo contraseña borrado. Diga la contraseña.");
-                                currentField = "contraseña"; // Esperar dictado
+                                currentField = "contraseña"; 
                             },
-                            () => { // onCancel (no borrar)
+                            () => { 
                                 showCaption("Contenido de contraseña mantenido.");
-                                // speakText("Contenido de contraseña mantenido."); // waitForConfirmation ya habla
                             }
                         );
                     } else {
@@ -1175,7 +1182,6 @@ if ('webkitSpeechRecognition' in window) {
                     showCaption("Botón Iniciar sesión activado.");
                     if (btnLogin) showButtonLoading(btnLogin); 
                     speakText("Iniciando sesión.", false, () => {
-                        // Disparar el evento de submit del formulario directamente
                         loginForm.dispatchEvent(new Event('submit')); 
                     });
                     commandHandled = true;
@@ -1204,7 +1210,7 @@ if ('webkitSpeechRecognition' in window) {
                     commandHandled = true;
                 } else if (lower.includes("cerrar menú") || lower.includes("cerrar menu") || lower.includes("cerrar navegación") || lower.includes("cerrar navegacion")) {
                     if (mainNavCollapse && mainNavCollapse.classList.contains('active')) {
-                        mainNavNavCollapse.classList.remove('active');
+                        mainNavCollapse.classList.remove('active');
                         document.body.classList.remove('no-scroll');
                         speakText("Menú de navegación cerrado.");
                     } else {
@@ -1213,21 +1219,16 @@ if ('webkitSpeechRecognition' in window) {
                     commandHandled = true;
                 }
                 // Comandos para navegar a módulos
-                // Nota: Los paths pasados a navigateToModule deben ser relativos a la ubicación actual del archivo HTML.
-                // Si estás en 'modulos/dashboard.html' y quieres ir a 'modulos/clients.html', la URL sería 'clients.html'.
-                // Si estás en 'modulos/dashboard.html' y quieres ir a 'index.html', sería '../index.html'.
-
                 let targetUrl = '';
                 let moduleDisplayName = '';
 
                 if (lower.includes("ir a inicio") || lower.includes("ir a home")) {
                     highlightField("home");
-                    // Si ya estamos logueados (no en la página de login), ir al dashboard
                     if (document.body.id !== 'login-page') {
-                        targetUrl = 'dashboard.html'; // Desde modulos/ a modulos/
+                        targetUrl = 'dashboard.html'; 
                         moduleDisplayName = 'el panel principal';
                     } else {
-                        targetUrl = 'index.html'; // Desde raíz a raíz
+                        targetUrl = 'index.html'; 
                         moduleDisplayName = 'la página de inicio';
                     }
                     commandHandled = true;
@@ -1256,7 +1257,7 @@ if ('webkitSpeechRecognition' in window) {
                     targetUrl = 'reports.html';
                     moduleDisplayName = 'reportes';
                     commandHandled = true;
-                } else if (lower.includes("ir a programaciones") || lower.includes("ir a calendario")) { // Comando para programaciones
+                } else if (lower.includes("ir a programaciones") || lower.includes("ir a calendario")) { 
                     highlightField("calendar");
                     targetUrl = 'calendar.html';
                     moduleDisplayName = 'programaciones';
@@ -1269,7 +1270,7 @@ if ('webkitSpeechRecognition' in window) {
                     commandHandled = true;
                 } else if ((lower.includes("cerrar sesión") || lower.includes("salir")) && logoutBtn) {
                     highlightField("logout");
-                    targetUrl = '../index.html'; // Desde modulos/ a la raíz
+                    targetUrl = '../index.html'; 
                     moduleDisplayName = 'cerrando sesión';
                     commandHandled = true;
                 }
@@ -1326,6 +1327,57 @@ if ('webkitSpeechRecognition' in window) {
                     commandHandled = true;
                 }
             }
+
+            // Comandos Específicos del Calendario/Programaciones (solo si estamos en calendar.html y modal abierto)
+            const isVisitModalOpen = visitDetailModal && visitDetailModal.classList.contains('show');
+            if (document.body.id === 'calendar-page' && isVisitModalOpen && !commandHandled) {
+                if (lower.includes("dictar observación") || lower.includes("dictar nota")) {
+                    currentField = "visitObservations";
+                    if (visitObservationsInput) visitObservationsInput.focus();
+                    highlightField("observaciones");
+                    speakText("Por favor, diga la observación.");
+                    showCaption("Campo observaciones activado. Diga la observación.");
+                    commandHandled = true;
+                } else if (currentField === "visitObservations") {
+                    if (visitObservationsInput) visitObservationsInput.value = transcript;
+                    highlightField("observaciones");
+                    showCaption(`Observación establecida: "${transcript}".`);
+                    speakText(`Observación establecida: "${transcript}".`);
+                    currentField = null;
+                    commandHandled = true;
+                } else if (lower.includes("cambiar estado a ")) {
+                    const statusMatch = lower.match(/cambiar estado a (.+)/);
+                    if (statusMatch && statusMatch[1]) {
+                        let newStatus = statusMatch[1].trim();
+                        // Normalizar el estado para que coincida con las opciones del select
+                        if (newStatus.includes("en progreso")) newStatus = "En Progreso";
+                        else if (newStatus.includes("completado")) newStatus = "Completado";
+                        else if (newStatus.includes("cancelado")) newStatus = "Cancelado";
+                        else if (newStatus.includes("pendiente")) newStatus = "Pendiente";
+                        
+                        // Verificar si el estado es válido
+                        const validStatuses = ["Pendiente", "En Progreso", "Completado", "Cancelado"];
+                        if (validStatuses.includes(newStatus) && visitStatusSelect) {
+                            visitStatusSelect.value = newStatus;
+                            highlightField("estado");
+                            showCaption(`Estado cambiado a: ${newStatus}.`);
+                            speakText(`Estado cambiado a ${newStatus}.`);
+                        } else {
+                            showCaption(`Estado "${newStatus}" no reconocido. Intente con: Pendiente, En Progreso, Completado o Cancelado.`);
+                            speakText(`Estado "${newStatus}" no reconocido. Intente con: Pendiente, En Progreso, Completado o Cancelado.`);
+                        }
+                    } else {
+                        showCaption("Por favor, diga 'cambiar estado a' seguido del estado deseado.");
+                        speakText("Por favor, diga 'cambiar estado a' seguido del estado deseado.");
+                    }
+                    commandHandled = true;
+                } else if (lower.includes("guardar cambios") && saveVisitChangesBtn) {
+                    highlightField("guardarCambiosVisita");
+                    saveVisitChangesBtn.click(); // Trigger the click event on the save button
+                    commandHandled = true;
+                }
+            }
+
 
             // Comandos de Accesibilidad Globales (siempre disponibles)
             if (!commandHandled) {
@@ -1387,7 +1439,7 @@ if ('webkitSpeechRecognition' in window) {
                         comandos += "También: cuántos servicios, cuántas citas, cuántos técnicos, cuántas instalaciones Starlink. Mostrar resumen, ocultar resumen. Mostrar estadísticas, ocultar estadísticas. Mostrar actividad, ocultar actividad. ";
                     }
                     if (document.body.id === 'calendar-page') {
-                        comandos += "También: ver agenda de hoy. ";
+                        comandos += "También: ver agenda de hoy. Dictar observación, cambiar estado a pendiente, cambiar estado a en progreso, cambiar estado a completado, cambiar estado a cancelado, guardar cambios. ";
                     }
                     if (document.body.id === 'tickets-page') {
                         comandos += "También: ver tickets. ";
@@ -1408,194 +1460,7 @@ if ('webkitSpeechRecognition' in window) {
                     showCaption("Comandos disponibles: " + comandos);
                     speakText("Comandos disponibles: " + comandos, false);
                     commandHandled = true;
-                } else if (document.body.id === 'calendar-page' && !commandHandled) { // Comandos específicos de programaciones
-                    if (lower.includes("ver agenda de hoy") || lower.includes("ver mi agenda")) {
-                        const today = new Date();
-                        const formattedToday = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-                        const visitsToday = technicalVisits.filter(visit => visit.date === formattedToday);
-
-                        if (visitsToday.length === 0) {
-                            speakText("No tienes visitas programadas para hoy.");
-                        } else {
-                            speakText(`Tienes ${visitsToday.length} visitas programadas para hoy.`);
-                            let currentVisitIndex = 0;
-
-                            const processNextVisit = () => {
-                                if (currentVisitIndex < visitsToday.length) {
-                                    const visit = visitsToday[currentVisitIndex];
-                                    let visitText = `Visita ${currentVisitIndex + 1}: A las ${visit.time}, para ${visit.company}, motivo: ${visit.reason}, dirección: ${visit.address}. `;
-                                    if (visit.contacts && visit.contacts.length > 0) {
-                                        visitText += `Contacto: ${visit.contacts[0].name} al teléfono ${visit.contacts[0].phone}. `;
-                                    }
-                                    if (visit.productsToInstall && visit.productsToInstall.length > 0) {
-                                        visitText += `Productos a instalar: ${visit.productsToInstall.map(p => `${p.quantity} ${p.name}`).join(', ')}.`;
-                                    }
-
-                                    speakText(visitText, false, () => {
-                                        if (visit.gpsCoords && (visit.gpsCoords.lat !== 0 || visit.gpsCoords.lng !== 0)) {
-                                            waitForConfirmation(
-                                                `¿Desea abrir el mapa para la visita a ${visit.company}? Diga "sí" o "no".`,
-                                                () => {
-                                                    simulateMap(visit.gpsCoords);
-                                                    currentVisitIndex++;
-                                                    // Pequeño retraso para que el navegador pueda abrir el mapa antes de la siguiente pregunta
-                                                    setTimeout(processNextVisit, 1000); 
-                                                },
-                                                () => {
-                                                    speakText("De acuerdo, no se abrirá el mapa.");
-                                                    currentVisitIndex++;
-                                                    processNextVisit(); // Continuar con la siguiente visita
-                                                }
-                                            );
-                                        } else {
-                                            currentVisitIndex++;
-                                            processNextVisit(); // Continuar con la siguiente visita si no hay GPS
-                                        }
-                                    });
-                                } else {
-                                    speakText("Fin de la agenda de hoy.");
-                                }
-                            };
-                            processNextVisit(); // Iniciar el procesamiento de visitas
-                        }
-                        commandHandled = true;
-                    }
-                } else if (document.body.id === 'tickets-page' && !commandHandled) {
-                    if (lower.includes("ver tickets") || lower.includes("listar tickets")) {
-                        speakText(`Hay ${tickets.length} tickets en total.`, false, () => {
-                            let ticketIndex = 0;
-                            const readNextTicket = () => {
-                                if (ticketIndex < tickets.length) {
-                                    const ticket = tickets[ticketIndex];
-                                    const assignedTech = technicians.find(t => t.id === ticket.assignedTechnicianId);
-                                    const techName = assignedTech ? assignedTech.name : 'No asignado';
-                                    const ticketText = `Ticket ${ticket.ticketNumber}: Asunto: ${ticket.subject}. Estado: ${ticket.status}. Asignado a: ${techName}. Fecha de creación: ${ticket.creationDate}. Última respuesta: ${ticket.lastResponse}.`;
-                                    speakText(ticketText, false, () => {
-                                        ticketIndex++;
-                                        setTimeout(readNextTicket, 500); // Pequeña pausa entre tickets
-                                    });
-                                } else {
-                                    speakText("Fin de la lista de tickets.");
-                                }
-                            };
-                            readNextTicket();
-                        });
-                        commandHandled = true;
-                    }
-                } else if (document.body.id === 'reports-page' && !commandHandled) {
-                    if (lower.includes("ver reportes") || lower.includes("leer reportes")) {
-                        speakText(`Reporte general: Hay ${reportsData.totalServices} servicios totales, ${reportsData.completedVisits} visitas completadas, ${reportsData.pendingTickets} tickets pendientes y ${reportsData.inProgressTickets} tickets en progreso.`, false);
-                        commandHandled = true;
-                    }
-                } else if (document.body.id === 'settings-page' && !commandHandled) {
-                    const languageSelect = document.getElementById('languageSelect');
-                    const notificationsToggle = document.getElementById('notificationsToggle');
-                    const themeSelect = document.getElementById('themeSelect');
-                    const autoSaveToggle = document.getElementById('autoSaveToggle');
-                    const defaultTechnicianSelect = document.getElementById('defaultTechnicianSelect');
-
-                    if (lower.includes("guardar configuración") || lower.includes("aplicar cambios")) {
-                        const saveBtn = document.getElementById('save-settings-btn');
-                        if (saveBtn) {
-                            saveBtn.click();
-                            // speakText("Configuración guardada."); // Handled by the form submit handler
-                        } else {
-                            speakText("No se encontró el botón para guardar la configuración.");
-                        }
-                        commandHandled = true;
-                    } else if (lower.includes("cambiar idioma a español") && languageSelect) {
-                        languageSelect.value = 'es';
-                        speakText("Idioma cambiado a español. Guarde la configuración para aplicar los cambios.");
-                        commandHandled = true;
-                    } else if (lower.includes("cambiar idioma a inglés") && languageSelect) {
-                        languageSelect.value = 'en';
-                        speakText("Idioma cambiado a inglés. Guarde la configuración para aplicar los cambios.");
-                        commandHandled = true;
-                    } else if (lower.includes("activar notificaciones") && notificationsToggle) {
-                        notificationsToggle.checked = true;
-                        speakText("Notificaciones activadas. Guarde la configuración para aplicar los cambios.");
-                        commandHandled = true;
-                    } else if (lower.includes("desactivar notificaciones") && notificationsToggle) {
-                        notificationsToggle.checked = false;
-                        speakText("Notificaciones desactivadas. Guarde la configuración para aplicar los cambios.");
-                        commandHandled = true;
-                    } else if (lower.includes("establecer tema claro") && themeSelect) {
-                        themeSelect.value = 'light';
-                        speakText("Tema establecido a claro. Guarde la configuración para aplicar los cambios.");
-                        commandHandled = true;
-                    } else if (lower.includes("establecer tema oscuro") && themeSelect) {
-                        themeSelect.value = 'dark';
-                        speakText("Tema establecido a oscuro. Guarde la configuración para aplicar los cambios.");
-                        commandHandled = true;
-                    } else if (lower.includes("establecer tema sistema") && themeSelect) {
-                        themeSelect.value = 'system';
-                        speakText("Tema establecido a sistema. Guarde la configuración para aplicar los cambios.");
-                        commandHandled = true;
-                    } else if (lower.includes("activar guardado automático") && autoSaveToggle) {
-                        autoSaveToggle.checked = true;
-                        speakText("Guardado automático activado. Guarde la configuración para aplicar los cambios.");
-                        commandHandled = true;
-                    } else if (lower.includes("desactivar guardado automático") && autoSaveToggle) {
-                        autoSaveToggle.checked = false;
-                        speakText("Guardado automático desactivado. Guarde la configuración para aplicar los cambios.");
-                        commandHandled = true;
-                    } else if (lower.includes("asignar técnico por defecto") && defaultTechnicianSelect) {
-                        const techNameMatch = lower.match(/asignar técnico por defecto (.+)/);
-                        if (techNameMatch && techNameMatch[1]) {
-                            const spokenName = techNameMatch[1].trim();
-                            const foundTech = technicians.find(tech => tech.name.toLowerCase().includes(spokenName));
-                            if (foundTech) {
-                                defaultTechnicianSelect.value = foundTech.id;
-                                speakText(`Técnico por defecto asignado a ${foundTech.name}. Guarde la configuración para aplicar los cambios.`);
-                            } else {
-                                speakText(`No se encontró un técnico con el nombre ${spokenName}.`);
-                            }
-                        } else {
-                            speakText("Por favor, diga 'asignar técnico por defecto' seguido del nombre del técnico.");
-                        }
-                        commandHandled = true;
-                    }
-                } else if (document.body.id === 'clients-page' && !commandHandled) {
-                    if (lower.includes("ver clientes") || lower.includes("listar clientes")) {
-                        speakText(`Hay ${clients.length} clientes registrados.`, false, () => {
-                            let clientIndex = 0;
-                            const readNextClient = () => {
-                                if (clientIndex < clients.length) {
-                                    const client = clients[clientIndex];
-                                    const clientText = `Cliente ${clientIndex + 1}: ${client.name}. Contacto: ${client.contactPerson}, teléfono ${client.phone}. Tipo: ${client.type}.`;
-                                    speakText(clientText, false, () => {
-                                        clientIndex++;
-                                        setTimeout(readNextClient, 500); // Pequeña pausa entre clientes
-                                    });
-                                } else {
-                                    speakText("Fin de la lista de clientes.");
-                                }
-                            };
-                            readNextClient();
-                        });
-                        commandHandled = true;
-                    }
-                } else if (document.body.id === 'services-page' && !commandHandled) {
-                    if (lower.includes("ver servicios") || lower.includes("listar servicios")) {
-                        speakText(`Ofrecemos ${services.length} servicios.`, false, () => {
-                            let serviceIndex = 0;
-                            const readNextService = () => {
-                                if (serviceIndex < services.length) {
-                                    const service = services[serviceIndex];
-                                    const serviceText = `Servicio ${serviceIndex + 1}: ${service.name}. Descripción: ${service.description}.`;
-                                    speakText(serviceText, false, () => {
-                                        serviceIndex++;
-                                        setTimeout(readNextService, 500); // Pequeña pausa entre servicios
-                                    });
-                                } else {
-                                    speakText("Fin de la lista de servicios.");
-                                }
-                            };
-                            readNextService();
-                        });
-                        commandHandled = true;
-                    }
-                }
+                } 
                 
                 if (!commandHandled) {
                     showCaption("No existe el comando indicado. Diga 'comandos' para ver la lista.");
@@ -1727,20 +1592,18 @@ function resetAccessibility() {
 // --- Lógica Específica de la Página de Login (index.html) ---
 // Solo se ejecuta si el body tiene el ID 'login-page'
 if (document.body.id === 'login-page') {
-    if (loginForm) { // Asegurarse de que el formulario existe
+    if (loginForm) { 
         loginForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             const usuarioInputVal = userInput ? userInput.value.trim() : '';
             const passwordInputVal = passInput ? passInput.value.trim() : '';
 
-            showButtonLoading(btnLogin); // Mostrar carga en el botón de login
+            showButtonLoading(btnLogin); 
 
             if (usuarioInputVal === 'admin' && passwordInputVal === 'admin') {
-                // Llama a navigateToModule para la redirección con carga y audio
-                // Desde index.html (raíz) a modulos/dashboard.html
                 navigateToModule('modulos/dashboard.html', 'el panel principal'); 
             } else {
-                hideButtonLoading(btnLogin); // Ocultar carga si falla el login
+                hideButtonLoading(btnLogin); 
                 showCaption("Usuario o contraseña incorrectos.");
                 speakText("Usuario o contraseña incorrectos.");
             }
@@ -1966,16 +1829,24 @@ if (document.body.id === 'calendar-page') {
             return;
         }
 
-        const modalTitle = document.getElementById('visitDetailModalLabel');
-        const modalBody = document.getElementById('visitDetailModalBody');
-        const btnMap = document.getElementById('btnViewMap');
+        currentVisitIdInModal = visitId; // *** Guardar el ID de la visita actual ***
 
-        if (modalTitle && modalBody && btnMap) {
+        const modalTitle = document.getElementById('visitDetailModalLabel');
+        const modalBody = document.getElementById('visitDetailModalBody'); // Contenedor principal del body
+        const btnMap = document.getElementById('btnViewMap');
+        
+        // Referencias a los nuevos campos dentro del modal
+        const obsInput = document.getElementById('visitObservationsInput');
+        const statusSelect = document.getElementById('visitStatusSelect');
+        const saveBtn = document.getElementById('saveVisitChangesBtn');
+
+
+        if (modalTitle && modalBody && btnMap && obsInput && statusSelect && saveBtn) {
             modalTitle.textContent = `Detalles de Visita: ${visit.reason}`;
             
             let contactsHtml = '';
             if (visit.contacts && visit.contacts.length > 0) {
-                contactsHtml = `<p class="mb-1"><strong>Contactos:</strong></p><ul class="products-list">`; // Reutilizo products-list para estética
+                contactsHtml = `<p class="mb-1"><strong>Contactos:</strong></p><ul class="products-list">`; 
                 visit.contacts.forEach(contact => {
                     contactsHtml += `<li>${contact.name} - ${contact.phone}</li>`;
                 });
@@ -1995,31 +1866,96 @@ if (document.body.id === 'calendar-page') {
                 productsHtml = `<p><strong>Productos a Instalar:</strong> Ninguno.</p>`;
             }
 
-            modalBody.innerHTML = `
+            // Contenido HTML principal del modal (excluyendo los campos de observación/estado que ya están en el HTML)
+            const mainDetailsHtml = `
                 <p><strong>Empresa:</strong> ${visit.company}</p>
                 <p><strong>Motivo:</strong> ${visit.reason}</p>
                 <p><strong>Fecha y Hora:</strong> ${new Date(visit.date + 'T' + visit.time).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
-                <p><strong>Estado:</strong> <span class="badge status-badge status-${visit.status.toLowerCase().replace(/\s/g, '-')}">${visit.status}</span></p>
+                <p><strong>Estado Actual:</strong> <span class="badge status-badge status-${visit.status.toLowerCase().replace(/\s/g, '-')}">${visit.status}</span></p>
                 <p><strong>Técnico Asignado:</strong> ${visit.technician}</p>
                 ${contactsHtml}
                 <p><strong>Dirección:</strong> ${visit.address}</p>
                 <p><strong>Fecha de Instalación:</strong> ${visit.installationDate || 'No aplica'}</p>
                 ${productsHtml}
-                <p><strong>Notas:</strong> ${visit.notes || 'No hay notas adicionales.'}</p>
                 <p><strong>Coordenadas GPS:</strong> ${visit.gpsCoords.lat}, ${visit.gpsCoords.lng}</p>
             `;
+            // Insertar los detalles principales antes de los campos de observación/estado
+            modalBody.querySelector('.mb-3').insertAdjacentHTML('beforebegin', mainDetailsHtml);
 
-            if (visit.gpsCoords && (visit.gpsCoords.lat !== 0 || visit.gpsCoords.lng !== 0)) { // Asegurar que no sean 0,0
-                btnMap.style.display = 'flex'; // Usar flex para centrar icono y texto
+
+            // Llenar los campos de observación y estado
+            obsInput.value = visit.notes || '';
+            statusSelect.value = visit.status;
+
+            if (visit.gpsCoords && (visit.gpsCoords.lat !== 0 || visit.gpsCoords.lng !== 0)) { 
+                btnMap.style.display = 'flex'; 
                 btnMap.onclick = () => simulateMap(visit.gpsCoords);
             } else {
                 btnMap.style.display = 'none';
             }
 
-            const visitDetailModal = new bootstrap.Modal(document.getElementById('visitDetailModal'));
-            visitDetailModal.show();
+            // Añadir event listener al botón de guardar cambios
+            saveBtn.onclick = () => saveVisitChanges(visitId);
+
+            const bsModal = new bootstrap.Modal(visitDetailModal);
+            bsModal.show();
+
+            // Limpiar los detalles principales al ocultar el modal para evitar duplicados
+            visitDetailModal.addEventListener('hidden.bs.modal', () => {
+                const elementsToRemove = modalBody.querySelectorAll('p:not(.mb-1), ul.products-list, span.status-badge');
+                elementsToRemove.forEach(el => {
+                    // Asegurarse de no eliminar los campos de input y select
+                    if (el !== obsInput.parentNode && el !== statusSelect.parentNode) {
+                        el.remove();
+                    }
+                });
+                currentVisitIdInModal = null; // Limpiar el ID de la visita
+                currentField = null; // Limpiar cualquier campo de dictado activo
+            }, { once: true }); // Ejecutar solo una vez
         }
     }
+
+    /**
+     * Saves the changes (observations and status) for a specific visit.
+     * @param {string} visitId - The ID of the visit to update.
+     */
+    function saveVisitChanges(visitId) {
+        const visit = technicalVisits.find(v => v.id === visitId);
+        if (!visit) {
+            console.error('Visita no encontrada para guardar cambios:', visitId);
+            showCaption("Error: Visita no encontrada para guardar cambios.");
+            speakText("Error: Visita no encontrada para guardar cambios.");
+            return;
+        }
+
+        const newObservations = visitObservationsInput ? visitObservationsInput.value.trim() : '';
+        const newStatus = visitStatusSelect ? visitStatusSelect.value : visit.status;
+
+        // Mostrar carga en el botón de guardar
+        showButtonLoading(saveVisitChangesBtn);
+
+        // Simular guardado en el "backend" (actualizar el array local)
+        setTimeout(() => {
+            visit.notes = newObservations;
+            visit.status = newStatus;
+
+            hideButtonLoading(saveVisitChangesBtn); // Ocultar carga
+            
+            // Re-renderizar las tarjetas para reflejar el cambio de estado
+            renderDailyProgramCards(); 
+
+            // Ocultar el modal
+            const bsModal = bootstrap.Modal.getInstance(visitDetailModal);
+            if (bsModal) {
+                bsModal.hide();
+            }
+
+            showCaption("Cambios guardados exitosamente.");
+            speakText("Cambios guardados exitosamente.");
+            console.log(`Visita ${visitId} actualizada: Observaciones "${newObservations}", Estado "${newStatus}"`);
+        }, 1000); // Simular un retraso de 1 segundo para el guardado
+    }
+
 
     /**
      * Simulates viewing the GPS coordinates on a map.
@@ -2035,6 +1971,11 @@ if (document.body.id === 'calendar-page') {
 
     // Renderizar las tarjetas de programación al cargar la página de calendario
     renderDailyProgramCards();
+
+    // Asegurarse de que el modal se inicialice con Bootstrap JS
+    // Esto se hace automáticamente con el bundle, pero si tuvieras un problema,
+    // podrías añadir new bootstrap.Modal(document.getElementById('visitDetailModal'));
+    // al final de DOMContentLoaded para inicializarlo explícitamente.
 }
 
 // --- Lógica Específica de la Vista de Técnicos (technicians.html) ---
@@ -2137,7 +2078,7 @@ if (document.body.id === 'reports-page') {
             </div>
             <div class="report-summary-card">
                 <h4>Visitas Completadas</h4>
-                <p class="value">${reportsData.completedVisits}</p>
+                <p class="value">${reportsData.completedVisitas}</p>
             </div>
             <div class="report-summary-card">
                 <h4>Tickets Pendientes</h4>
