@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - PreySop Gestión de Servicios</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/styles.css"> <!-- Enlaza al CSS global (nota la ruta relativa) -->
+</head>
+<body id="dashboard-page"> <!-- Añade un ID para que el JS sepa que es la página del dashboard -->
+    <!-- Overlay de carga (inicialmente oculto) -->
+    <div id="loadingOverlay" style="display: none;">
+        <i class="fas fa-spinner fa-spin fa-3x"></i>
+        <h2>PreySop...</h2>
+        <p>Cargando módulo</p>
+    </div>
+
+    <header class="main-header">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div class="logo-area d-flex align-items-center">
+                <img src="../assets/img/logo.png" alt="Logo PreySop" class="app-logo">
+                <h1 class="page-title">Dashboard</h1> <!-- Título de la página -->
+            </div>
+            <!-- Botón de hamburguesa para móvil/desktop -->
+            <button class="hamburger-btn" id="hamburgerBtn" aria-label="Abrir menú de navegación">
+                <i class="fas fa-bars"></i>
+            </button>
+            <!-- Menú de navegación colapsable -->
+            <nav class="main-nav main-nav-collapse" id="mainNavCollapse">
+                <button class="close-btn" id="closeNavBtn" aria-label="Cerrar menú de navegación">
+                    <i class="fas fa-times"></i>
+                </button>
+                <ul class="nav-list">
+                    <li><a href="#" class="nav-link" data-module="home" onclick="event.preventDefault(); navigateToModule('dashboard.html', 'el panel principal');">Inicio</a></li>
+                    <li><a href="#" class="nav-link" data-module="services" onclick="event.preventDefault(); navigateToModule('services.html', 'servicios');">Servicios</a></li>
+                    <li><a href="#" class="nav-link" data-module="clients" onclick="event.preventDefault(); navigateToModule('clients.html', 'clientes');">Clientes</a></li>
+                    <li><a href="#" class="nav-link" data-module="technicians" onclick="event.preventDefault(); navigateToModule('technicians.html', 'técnicos');">Técnicos</a></li>
+                    <li><a href="#" class="nav-link" data-module="tickets" onclick="event.preventDefault(); navigateToModule('tickets.html', 'tickets');">Tickets</a></li>
+                    <li><a href="#" class="nav-link" data-module="reports" onclick="event.preventDefault(); navigateToModule('reports.html', 'reportes');">Reportes</a></li>
+                    <li><a href="#" class="nav-link" data-module="calendar" onclick="event.preventDefault(); navigateToModule('calendar.html', 'programaciones');">Programaciones</a></li>
+                    <li><a href="#" class="nav-link" data-module="settings" onclick="event.preventDefault(); navigateToModule('settings.html', 'configuración');">Configuración</a></li>
+                    <li><button id="logoutBtn" class="btn btn-danger nav-link" data-module="logout">Cerrar Sesión</button></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container my-5">
+        <section id="overview" class="dashboard-section p-4 mb-4 rounded-3 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="section-title mb-0">Resumen General</h2>
+                <button class="btn btn-sm btn-outline-secondary toggle-section-btn" data-target-id="overview" aria-label="Ocultar o mostrar sección de resumen">
+                    <i class="fas fa-eye-slash"></i>
+                </button>
+            </div>
+            <div class="section-content">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <i class="fas fa-tools stat-icon"></i>
+                        <h3>Total Servicios</h3>
+                        <p id="total-services" class="stat-value">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-calendar-alt stat-icon"></i>
+                        <h3>Citas Próximas</h3>
+                        <p id="upcoming-appointments" class="stat-value">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-user-tie stat-icon"></i>
+                        <h3>Técnicos Activos</h3>
+                        <p id="active-technicians" class="stat-value">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-wifi stat-icon"></i>
+                        <h3>Instalaciones Starlink</h3>
+                        <p id="starlink-installs" class="stat-value">0</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="charts" class="dashboard-section p-4 mb-4 rounded-3 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="section-title mb-0">Estadísticas de Servicios</h2>
+                <button class="btn btn-sm btn-outline-secondary toggle-section-btn" data-target-id="charts" aria-label="Ocultar o mostrar sección de estadísticas">
+                    <i class="fas fa-eye-slash"></i>
+                </button>
+            </div>
+            <div class="section-content">
+                <div class="chart-container">
+                    <canvas id="serviceChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section id="recent-activity" class="dashboard-section p-4 mb-4 rounded-3 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="section-title mb-0">Actividad Reciente</h2>
+                <button class="btn btn-sm btn-outline-secondary toggle-section-btn" data-target-id="recent-activity" aria-label="Ocultar o mostrar sección de actividad reciente">
+                    <i class="fas fa-eye-slash"></i>
+                </button>
+            </div>
+            <div class="section-content">
+                <ul id="activity-list" class="list-group">
+                    <!-- Actividad se cargará aquí desde JS -->
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <footer class="main-footer">
+        <p>&copy; 2023 PreySop Gestión de Servicios. Todos los derechos reservados.</p>
+    </footer>
+
+    <!-- Botones flotantes de accesibilidad con tooltips (igual que en login.html) -->
+    <button class="fab-btn fab-mic" id="btnMic" aria-label="Activar dictado por voz" title="Activar dictado por voz" tabindex="0">
+        <i class="fas fa-microphone"></i>
+        <span class="tooltip-fab">Dictado por voz</span>
+    </button>
+    <button class="fab-btn fab-speaker" id="btnGuide" aria-label="Escuchar guía de la página" title="Escuchar guía de la página" tabindex="0" onclick="speakGuide()">
+        <i class="fas fa-volume-up"></i>
+        <span class="tooltip-fab">Escuchar guía de la página</span>
+    </button>
+    <button class="fab-btn fab-access" id="btnLargeText" onclick="toggleLargeText()" aria-label="Aumentar o reducir tamaño de texto" title="Aumentar o reducir tamaño de texto" tabindex="0">
+        <i class="fas fa-universal-access"></i>
+        <span class="tooltip-fab">Aumentar o reducir tamaño de texto</span>
+    </button>
+    <button class="fab-btn fab-dark" id="btnDarkMode" onclick="toggleDarkMode()" aria-label="Activar o desactivar modo oscuro" title="Activar o desactivar modo oscuro" tabindex="0">
+        <i class="fas fa-moon"></i>
+        <span class="tooltip-fab">Modo oscuro</span>
+    </button>
+    <button class="fab-btn fab-large" id="btnReset" onclick="resetAccessibility()" aria-label="Restablecer accesibilidad" title="Restablecer accesibilidad" tabindex="0">
+        <i class="fas fa-sync-alt"></i>
+        <span class="tooltip-fab">Restablecer accesibilidad</span>
+    </button>
+    <!-- Subtítulos accesibles SIEMPRE visibles -->
+    <div id="live-captions" aria-live="polite" aria-atomic="true"></div>
+
+    <!-- Chart.js CDN (solo necesario en páginas con gráficos) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Tu script principal (nota la ruta relativa) -->
+    <script src="../js/main.js"></script>
+</body>
+</html>
