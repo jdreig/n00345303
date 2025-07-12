@@ -6,6 +6,11 @@ let currentField = null; // Para dictado de campos de formulario (en index.html)
 let waitingForConfirmation = false; // Para confirmaciones de borrar/mantener, etc.
 let originalOnResult = null; // Para guardar el onresult principal durante confirmaciones
 
+// Nuevas variables para manejo de errores de voz en móvil
+let noSpeechCount = 0;
+const maxNoSpeechAttempts = 3; // Cuántas veces intentamos reiniciar por "no-speech" antes de pausar
+let speechDetectedInSession = false; // Para saber si hubo voz real en la sesión actual de reconocimiento
+
 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
 // Referencias a elementos del DOM (comunes a todas las páginas)
@@ -26,6 +31,7 @@ const userInput = document.getElementById('username');
 const passInput = document.getElementById('password');
 const btnLogin = document.getElementById('btnLogin');
 const btnRecover = document.getElementById('btnRecover');
+const loginForm = document.getElementById('loginForm'); // *** NUEVA REFERENCIA ***
 
 // Referencia al botón de cerrar sesión (estará en todas las páginas con nav)
 const logoutBtn = document.getElementById('logoutBtn');
@@ -1005,6 +1011,8 @@ if ('webkitSpeechRecognition' in window) {
                 currentField = null;
                 waitingForConfirmation = false;
                 originalOnResult = null;
+                noSpeechCount = 0; // Resetear contador al desactivar manualmente
+                speechDetectedInSession = false;
             } else {
                 if (window.speechSynthesis.speaking) {
                     showCaption("Por favor, espere a que termine la guía o desactívela.");
@@ -1014,19 +1022,40 @@ if ('webkitSpeechRecognition' in window) {
                 isListening = true;
                 btnMic.classList.add('listening');
                 highlightField("mic");
-                showCaption("Activando micrófono...");
+                showCaption("Activando reconocimiento de voz..."); // Mensaje más claro
+
+                noSpeechCount = 0; // Resetear contador al activar
+                speechDetectedInSession = false; // Resetear al iniciar nueva sesión
 
                 audioContext.resume().then(() => {
                     recognition.start();
+                    // Mensaje de activación explícito y en masculino
+                    speakText("Reconocimiento de voz activado.");
                 }).catch(e => console.error("Error al resumir AudioContext en btnMic click:", e));
             }
         });
     }
 
+    // Evento que se dispara cuando el reconocimiento de voz ha comenzado a escuchar audio.
     recognition.onaudiostart = function() {
-        if (isListening && !window.speechSynthesis.speaking) {
-            speakText("Escuchando. Diga 'comandos' para ayuda, o lo que desea realizar.", false);
+        console.log("Audio capturado por el reconocimiento.");
+        // Solo muestra el caption, NO LLAMA A speakText aquí
+        if (isListening) {
+            showCaption("Escuchando. Diga 'comandos' para ayuda, o lo que desea realizar.");
         }
+    };
+
+    // Evento que se dispara cuando se detecta voz.
+    recognition.onspeechstart = function() {
+        console.log("Voz detectada.");
+        speechDetectedInSession = true; // Se detectó voz en esta sesión
+        noSpeechCount = 0; // Resetear el contador de no-speech si se detecta voz
+    };
+
+    // Evento que se dispara cuando la voz ha dejado de ser detectada.
+    recognition.onspeechend = function() {
+        console.log("Fin de la detección de voz.");
+        // No hacer nada aquí, el onresult o onend se encargarán del procesamiento.
     };
 
     // Este es el onresult PRINCIPAL que maneja TODOS los comandos de voz.
@@ -1036,7 +1065,8 @@ if ('webkitSpeechRecognition' in window) {
 
         for (let i = event.resultIndex; i < event.results.length; ++i) {
             if (event.results[i].isFinal) {
-                finalTranscript += event.results[i][0].transcript;
+                // *** CORRECCIÓN CLAVE AQUÍ: Usar event.results[i][0].transcript ***
+                finalTranscript += event.results[i][0].transcript; 
             } else {
                 interimTranscript += event.results[i][0].transcript;
             }
@@ -1048,6 +1078,10 @@ if ('webkitSpeechRecognition' in window) {
             const transcript = finalTranscript.trim();
             const lower = transcript.toLowerCase();
 
+            console.log("Final Transcript (after correction):", transcript); // Log para depuración
+            console.log("Lower Transcript (after correction):", lower); // Log para depuración
+            console.log("Current Field (before processing):", currentField); // Log para depuración
+
             // Si estamos esperando una confirmación, el onresult temporal de waitForConfirmation
             // ya está activo. No procesamos aquí.
             if (waitingForConfirmation) {
@@ -1057,6 +1091,8 @@ if ('webkitSpeechRecognition' in window) {
 
             // Detener cualquier síntesis de voz activa antes de procesar un nuevo comando.
             window.speechSynthesis.cancel(); 
+            noSpeechCount = 0; // Resetear el contador de no-speech si se procesa un comando final
+            speechDetectedInSession = true; // Asegurar que se marcó que hubo voz
 
             // --- Lógica de Comandos Generalizada ---
             let commandHandled = false;
@@ -1064,20 +1100,24 @@ if ('webkitSpeechRecognition' in window) {
             // Comandos específicos de Login (solo si estamos en la página de login)
             if (document.body.id === 'login-page') {
                 if (currentField === "usuario") {
-                    if (userInput) userInput.value = transcript;
-                    if (userInput) userInput.focus();
+                    if (userInput) {
+                        userInput.value = transcript;
+                        userInput.focus();
+                    }
                     highlightField("usuario");
                     showCaption(`Usuario establecido: "${transcript}".`);
                     speakText(`Usuario establecido: "${transcript}".`);
-                    currentField = null; 
+                    currentField = null; // Clear the field state after setting
                     commandHandled = true;
                 } else if (currentField === "contraseña") {
-                    if (passInput) passInput.value = transcript;
-                    if (passInput) passInput.focus();
+                    if (passInput) {
+                        passInput.value = transcript;
+                        passInput.focus();
+                    }
                     highlightField("contraseña");
                     showCaption(`Contraseña establecida.`);
                     speakText(`Contraseña establecida.`);
-                    currentField = null; 
+                    currentField = null; // Clear the field state after setting
                     commandHandled = true;
                 } else if (lower === "usuario") {
                     if (userInput && userInput.value) {
@@ -1129,13 +1169,14 @@ if ('webkitSpeechRecognition' in window) {
                         showCaption("Campo contraseña activado. Diga la contraseña.");
                     }
                     commandHandled = true;
-                } else if (lower.includes("iniciar sesión") && btnLogin) {
+                } else if (lower.includes("iniciar sesión") && loginForm) { 
                     highlightField("login");
-                    btnLogin.focus();
+                    if (btnLogin) btnLogin.focus(); 
                     showCaption("Botón Iniciar sesión activado.");
-                    showButtonLoading(btnLogin); // Mostrar carga
+                    if (btnLogin) showButtonLoading(btnLogin); 
                     speakText("Iniciando sesión.", false, () => {
-                        setTimeout(() => { btnLogin.click(); }, 500); 
+                        // Disparar el evento de submit del formulario directamente
+                        loginForm.dispatchEvent(new Event('submit')); 
                     });
                     commandHandled = true;
                 } else if ((lower.includes("recuperar acceso") || lower.includes("olvidé mi contraseña")) && btnRecover) {
@@ -1163,7 +1204,7 @@ if ('webkitSpeechRecognition' in window) {
                     commandHandled = true;
                 } else if (lower.includes("cerrar menú") || lower.includes("cerrar menu") || lower.includes("cerrar navegación") || lower.includes("cerrar navegacion")) {
                     if (mainNavCollapse && mainNavCollapse.classList.contains('active')) {
-                        mainNavCollapse.classList.remove('active');
+                        mainNavNavCollapse.classList.remove('active');
                         document.body.classList.remove('no-scroll');
                         speakText("Menú de navegación cerrado.");
                     } else {
@@ -1564,14 +1605,43 @@ if ('webkitSpeechRecognition' in window) {
         }
     };
 
-    recognition.onend = function() {
-        if (isListening && !window.speechSynthesis.speaking && !waitingForConfirmation) { 
-            console.log("El reconocimiento se detuvo inesperadamente (onend). Reanudando...");
-            showCaption("Micrófono reanudando...");
-            audioContext.resume().then(() => {
-                recognition.start();
-            }).catch(e => console.error("Error al reanudar AudioContext en onend inesperado:", e));
-        } else if (!isListening) {
+    recognition.onend = function(event) {
+        console.log("Reconocimiento terminó (onend). isListening:", isListening, "speechDetectedInSession:", speechDetectedInSession, "event.error:", event ? event.error : 'N/A');
+        if (isListening) {
+            // Si el reconocimiento terminó y no fue por un error específico o por detección de voz
+            // y no estamos en una confirmación activa, intentamos reiniciar.
+            if (!speechDetectedInSession && !waitingForConfirmation) {
+                noSpeechCount++;
+                console.log(`No se detectó voz. Intentos restantes: ${maxNoSpeechAttempts - noSpeechCount}`);
+                if (noSpeechCount >= maxNoSpeechAttempts) {
+                    showCaption("No se detectó voz por un tiempo. Micrófono pausado. Active manualmente.");
+                    speakText("No se detectó voz por un tiempo. Micrófono pausado. Active manualmente.");
+                    isListening = false;
+                    if (btnMic) btnMic.classList.remove('listening');
+                    highlightField(null);
+                    noSpeechCount = 0; // Resetear para el próximo inicio manual
+                    speechDetectedInSession = false;
+                    return; // No reiniciar automáticamente
+                } else {
+                    showCaption("No se detectó voz. Reanudando micrófono...");
+                    // No hablar aquí, solo mostrar caption
+                }
+            } else {
+                noSpeechCount = 0; // Resetear si hubo voz o si terminó por un comando
+                speechDetectedInSession = false; // Resetear para la próxima sesión
+            }
+
+            // Reanudar el reconocimiento después de un breve retraso
+            // Solo si isListening sigue siendo true (no se desactivó por maxNoSpeechAttempts)
+            if (isListening) {
+                setTimeout(() => {
+                    audioContext.resume().then(() => {
+                        recognition.start();
+                    }).catch(e => console.error("Error al reanudar AudioContext en onend:", e));
+                }, 500); // Pequeño retraso para evitar ciclos rápidos
+            }
+        } else {
+            // Si isListening es false, el usuario lo desactivó manualmente o se detuvo por un error grave
             if (btnMic) btnMic.classList.remove('listening');
             highlightField(null);
             showCaption("Dictado por voz desactivado.");
@@ -1582,28 +1652,26 @@ if ('webkitSpeechRecognition' in window) {
         console.error("Error de reconocimiento de voz:", event.error);
         if (waitingForConfirmation) {
             console.warn("Error de reconocimiento durante confirmación, la lógica de confirmación lo reintentará.");
+            // No reiniciar aquí, la lógica de confirmación se encarga
             return; 
         }
 
         if (event.error === 'no-speech') {
-            if (isListening) {
-                // showCaption("No se detectó voz. El micrófono sigue activo."); 
-            }
+            // El onend ya maneja la lógica de no-speech, así que aquí solo logueamos
+            console.log("Error 'no-speech' detectado. El onend se encargará.");
         } else if (event.error === 'not-allowed') {
             showCaption("Permiso de micrófono denegado. Por favor, actívelo en la configuración del navegador.");
             speakText("Permiso de micrófono denegado. Por favor, actívelo en la configuración del navegador.");
             isListening = false;
             if (btnMic) {
                 btnMic.classList.remove('listening');
-                btnMic.disabled = true;
+                btnMic.disabled = true; // Deshabilitar el botón si no hay permiso
             }
             highlightField(null);
-        } else if (event.error === 'network') {
-            showCaption("Error de red en el servicio de voz. Verifique su conexión.");
-            speakText("Error de red en el servicio de voz. Verifique su conexión.");
         } else if (event.error === 'aborted') {
+            // Aborted puede ocurrir por varias razones, a menudo es seguro reintentar
             if (isListening) {
-                showCaption("Reconocimiento de voz pausado o finalizado. Reanudando...");
+                showCaption("Reconocimiento de voz pausado. Reanudando..."); // Solo caption
                 setTimeout(() => {
                     audioContext.resume().then(() => {
                         recognition.start();
@@ -1611,7 +1679,7 @@ if ('webkitSpeechRecognition' in window) {
                 }, 500);
             }
         } else {
-            showCaption("Error de reconocimiento de voz: " + event.error + ". Reanudando...");
+            showCaption("Error de reconocimiento de voz: " + event.error + ". Reanudando..."); // Solo caption
             speakText("Error de reconocimiento de voz: " + event.error + ". Reanudando...");
             if (isListening) {
                 setTimeout(() => {
@@ -1659,8 +1727,8 @@ function resetAccessibility() {
 // --- Lógica Específica de la Página de Login (index.html) ---
 // Solo se ejecuta si el body tiene el ID 'login-page'
 if (document.body.id === 'login-page') {
-    if (document.getElementById('loginForm')) {
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    if (loginForm) { // Asegurarse de que el formulario existe
+        loginForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             const usuarioInputVal = userInput ? userInput.value.trim() : '';
             const passwordInputVal = passInput ? passInput.value.trim() : '';
