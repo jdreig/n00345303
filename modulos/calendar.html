@@ -66,10 +66,25 @@
                 </div>
                 <div class="modal-body" id="visitDetailModalBody">
                     <!-- Los detalles de la visita se cargarán aquí con JS -->
+                    <!-- Campos para observaciones y estado (se llenarán con JS) -->
+                    <div class="mb-3">
+                        <label for="visitObservationsInput" class="form-label">Observaciones del Técnico:</label>
+                        <textarea class="form-control" id="visitObservationsInput" rows="3" placeholder="Ingrese observaciones aquí..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="visitStatusSelect" class="form-label">Estado del Servicio:</label>
+                        <select class="form-select" id="visitStatusSelect">
+                            <option value="Pendiente">Pendiente</option>
+                            <option value="En Progreso">En Progreso</option>
+                            <option value="Completado">Completado</option>
+                            <option value="Cancelado">Cancelado</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                     <button type="button" class="btn btn-map" id="btnViewMap"><i class="fas fa-map-marker-alt"></i> Ver en Mapa</button>
+                    <button type="button" class="btn btn-primary" id="saveVisitChangesBtn"><i class="fas fa-save"></i> Guardar Cambios</button>
                 </div>
             </div>
         </div>
