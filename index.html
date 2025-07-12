@@ -1,0 +1,90 @@
+<html lang="es">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>PreySop - Inicio de Sesión</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/styles.css"> <!-- Enlaza al CSS global -->
+</head>
+<body id="login-page"> <!-- Añade un ID para que el JS sepa que es la página de login -->
+    <!-- Overlay de carga -->
+    <div id="loadingOverlay" style="display: none;">
+        <i class="fas fa-spinner fa-spin fa-3x"></i>
+        <h2>PreySop...</h2>
+        <p>Cargando panel principal</p>
+    </div>
+
+    <!-- Contenedor para el botón de hamburguesa y el menú colapsable en la página de login -->
+    <div class="header-placeholder">
+        <!-- Menú de navegación colapsable -->
+        <nav class="main-nav main-nav-collapse" id="mainNavCollapse">
+            <button class="close-btn" id="closeNavBtn" aria-label="Cerrar menú de navegación">
+                <i class="fas fa-times"></i>
+            </button>
+            <ul class="nav-list">
+                <li><a href="index.html" class="nav-link" data-module="home">Inicio</a></li>
+                <li><a href="modulos/services.html" class="nav-link" data-module="services">Servicios</a></li>
+                <li><a href="modulos/clients.html" class="nav-link" data-module="clients">Clientes</a></li>
+                <li><a href="modulos/technicians.html" class="nav-link" data-module="technicians">Técnicos</a></li>
+                <li><a href="modulos/tickets.html" class="nav-link" data-module="tickets">Tickets</a></li>
+                <li><a href="modulos/reports.html" class="nav-link" data-module="reports">Reportes</a></li>
+                <li><a href="modulos/calendar.html" class="nav-link" data-module="calendar">Calendario</a></li>
+                <li><a href="modulos/settings.html" class="nav-link" data-module="settings">Configuración</a></li>
+                <!-- El botón de cerrar sesión no tiene sentido en la página de login, se activa desde el dashboard -->
+            </ul>
+        </nav>
+    </div>
+
+    <main>
+        <div class="login-container shadow" aria-label="Panel de inicio de sesión">
+            <div class="login-header">
+                <img src="assets/img/logo.png" alt="Logo PreySop" class="app-logo"/> <!-- Ruta actualizada al logo -->
+                <h1>PreySop</h1>
+                <small>Gestión de Servicios Técnicos</small>
+            </div>
+            <form id="loginForm" autocomplete="on" aria-label="Formulario de inicio de sesión">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Usuario</label>
+                    <input type="text" class="form-control" id="username" name="username" required autocomplete="username" aria-required="true" aria-label="Usuario">
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Contraseña</label>
+                    <div class="input-group">
+                        <input type="password" class="form-control" id="password" name="password" required autocomplete="current-password" aria-required="true" aria-label="Contraseña">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 mt-2" id="btnLogin" aria-label="Iniciar sesión">Iniciar sesión</button>
+            </form>
+            <div class="access-links">
+                <a href="recover.html" id="btnRecover" aria-label="Recuperar acceso">¿Olvidaste tu contraseña?</a>
+            </div>
+        </div>
+    </main>
+    <!-- Botones flotantes de accesibilidad con tooltips -->
+    <button class="fab-btn fab-mic" id="btnMic" aria-label="Activar dictado por voz" title="Activar dictado por voz" tabindex="0">
+        <i class="fas fa-microphone"></i>
+        <span class="tooltip-fab">Dictado por voz</span>
+    </button>
+    <button class="fab-btn fab-speaker" id="btnGuide" aria-label="Escuchar guía de la página" title="Escuchar guía de la página" tabindex="0" onclick="speakGuide()">
+        <i class="fas fa-volume-up"></i>
+        <span class="tooltip-fab">Escuchar guía de la página</span>
+    </button>
+    <button class="fab-btn fab-access" id="btnLargeText" onclick="toggleLargeText()" aria-label="Aumentar o reducir tamaño de texto" title="Aumentar o reducir tamaño de texto" tabindex="0">
+        <i class="fas fa-universal-access"></i>
+        <span class="tooltip-fab">Aumentar o reducir tamaño de texto</span>
+    </button>
+    <button class="fab-btn fab-dark" id="btnDarkMode" onclick="toggleDarkMode()" aria-label="Activar o desactivar modo oscuro" title="Activar o desactivar modo oscuro" tabindex="0">
+        <i class="fas fa-moon"></i>
+        <span class="tooltip-fab">Modo oscuro</span>
+    </button>
+    <button class="fab-btn fab-large" id="btnReset" onclick="resetAccessibility()" aria-label="Restablecer accesibilidad" title="Restablecer accesibilidad" tabindex="0">
+        <i class="fas fa-sync-alt"></i>
+        <span class="tooltip-fab">Restablecer accesibilidad</span>
+    </button>
+    <!-- Subtítulos accesibles SIEMPRE visibles -->
+    <div id="live-captions" aria-live="polite" aria-atomic="true"></div>
+
+    <script src="js/main.js"></script> <!-- Enlaza al JS global -->
+</body>
+</html>
