@@ -1,0 +1,1409 @@
+/* Variables CSS para colores y gradientes */
+:root {
+    --main-blue: #487DA9;
+    --main-blue-dark: #345c7c;
+    --main-blue-light: #7faed6;
+    --background-gradient: linear-gradient(135deg, #487DA9 0%, #7faed6 100%);
+    --text-dark: #1a1a1a;
+    --text-light: #fff;
+    --contrast-bg: #fff;
+    --contrast-text: #1a1a1a;
+    --card-bg: #f8f9fa;
+    --card-shadow: 0 4px 12px rgba(72,125,169,0.1);
+    --nav-bg-color: var(--main-blue-dark);
+
+    /* Colores específicos del calendario/programación */
+    --program-card-bg: #fff;
+    --program-card-border: #e0e0e0;
+    --program-card-hover-shadow: 0 8px 20px rgba(72,125,169,0.15);
+    --agenda-item-bg: #f0f0f0;
+    --agenda-item-border: #ccc;
+
+    /* Colores de estado mejorados */
+    --status-pending-bg: #ffc107;   /* Amarillo */
+    --status-pending-text: #343a40;
+    --status-in-progress-bg: #17a2b8; /* Azul cian */
+    --status-in-progress-text: #fff;
+    --status-completed-bg: #28a745; /* Verde */
+    --status-completed-text: #fff;
+    --status-cancelled-bg: #dc3545; /* Rojo */
+    --status-cancelled-text: #fff;
+
+    /* Colores específicos para técnicos */
+    --technician-card-bg: #ffffff;
+    --technician-card-border: #e0e0e0;
+    --technician-card-hover-shadow: 0 8px 20px rgba(72,125,169,0.15);
+    --technician-name-color: var(--main-blue-dark);
+    --technician-specialty-color: #6c757d;
+    --technician-contact-color: #495057;
+
+    /* Colores específicos para tickets */
+    --ticket-card-bg: #ffffff;
+    --ticket-card-border: #e0e0e0;
+    --ticket-card-hover-shadow: 0 8px 20px rgba(72,125,169,0.15);
+    --ticket-title-color: var(--main-blue-dark);
+    --ticket-meta-color: #6c757d;
+
+    /* Colores específicos para reportes */
+    --report-summary-bg: #ffffff;
+    --report-summary-border: #e0e0e0;
+    --report-value-color: var(--main-blue-dark);
+
+    /* Colores específicos para configuración */
+    --setting-item-bg: #ffffff;
+    --setting-item-border: #e0e0e0;
+    --setting-label-color: var(--main-blue-dark);
+
+    /* Colores específicos para clientes */
+    --client-card-bg: #ffffff;
+    --client-card-border: #e0e0e0;
+    --client-card-hover-shadow: 0 8px 20px rgba(72,125,169,0.15);
+    --client-name-color: var(--main-blue-dark);
+    --client-meta-color: #6c757d;
+
+    /* Colores específicos para servicios */
+    --service-card-bg: #ffffff;
+    --service-card-border: #e0e0e0;
+    --service-card-hover-shadow: 0 8px 20px rgba(72,125,169,0.15);
+    --service-title-color: var(--main-blue-dark);
+    --service-description-color: #495057;
+}
+
+/* Estilos generales del cuerpo y HTML */
+html { scroll-behavior: smooth; }
+body {
+    min-height: 100vh;
+    background: var(--background-gradient);
+    display: flex;
+    flex-direction: column; /* Para que el footer se pegue abajo */
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: var(--contrast-text);
+    transition: background 0.3s, color 0.3s;
+    overflow-x: hidden; /* Evitar scroll horizontal por el offcanvas */
+}
+
+/* Estilos del encabezado principal (común para todas las páginas con header) */
+.main-header {
+    background: var(--nav-bg-color);
+    color: var(--text-light);
+    padding: 1rem 0;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    position: sticky;
+    top: 0;
+    z-index: 100; /* Asegurar que esté por encima de otros elementos */
+}
+.main-header .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.logo-area {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+.app-logo {
+    height: 60px; /* Ajusta el tamaño del logo */
+    width: auto;
+    object-fit: contain;
+    border-radius: 50%; /* Para que sea circular si es un icono */
+    box-shadow: 0 0 8px rgba(0,0,0,0.2);
+}
+.main-header .page-title { /* Nuevo estilo para el título de la página */
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-light);
+}
+
+/* Botón de hamburguesa para activar el menú */
+.hamburger-btn {
+    background: none;
+    border: none;
+    color: var(--text-light);
+    font-size: 2rem;
+    cursor: pointer;
+    z-index: 101; /* Por encima del header */
+    display: block; /* Siempre visible para activar el menú */
+}
+
+/* Menú de navegación colapsable (Offcanvas-like) */
+.main-nav-collapse {
+    position: fixed;
+    top: 0;
+    right: -300px; /* Oculto fuera de pantalla por defecto */
+    width: 280px; /* Ancho del menú */
+    height: 100%;
+    background: var(--nav-bg-color);
+    flex-direction: column;
+    padding: 20px;
+    box-shadow: -5px 0 15px rgba(0,0,0,0.2);
+    transition: right 0.3s ease-in-out;
+    z-index: 999; /* Asegurar que esté por encima de todo */
+    display: flex; /* Asegurar que flexbox funcione para la columna */
+    align-items: flex-start; /* Alinear elementos a la izquierda */
+}
+.main-nav-collapse.active {
+    right: 0; /* Mostrar menú */
+}
+.main-nav .nav-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    flex-direction: column;
+    width: 100%;
+    margin-top: 20px;
+    gap: 10px;
+}
+.main-nav .nav-link, .main-nav .btn {
+    color: var(--text-light);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.05em;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    transition: background 0.2s, color 0.2s;
+    white-space: nowrap;
+    width: 100%; /* Ocupar todo el ancho en el menú */
+    text-align: left;
+}
+.main-nav .nav-link:hover, .main-nav .btn:hover {
+    background: var(--main-blue-light);
+    color: var(--main-blue-dark);
+}
+.main-nav .btn-danger {
+    background: #dc3545;
+    border-color: #dc3545;
+}
+.main-nav .btn-danger:hover {
+    background: #c82333;
+    border-color: #bd2130;
+}
+.main-nav-collapse .close-btn {
+    background: none;
+    border: none;
+    color: var(--text-light);
+    font-size: 2rem;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    cursor: pointer;
+}
+
+/* Contenido principal */
+main {
+    flex-grow: 1; /* Permite que el main ocupe el espacio restante */
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 15px;
+}
+
+/* Estilos de la página de Login/Index */
+.login-container {
+    background: var(--contrast-bg);
+    border-radius: 18px;
+    box-shadow: 0 6px 32px rgba(72,125,169,0.18);
+    padding: 2.5rem 2rem 2rem 2rem;
+    max-width: 400px;
+    width: 100%;
+    margin: auto; /* Centrar en el viewport */
+}
+.login-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+.login-header .app-logo { /* Reutiliza la clase app-logo */
+    width: 220px;
+    height: 220px;
+    margin-bottom: 0.5rem;
+    transition: width 0.2s, height 0.2s;
+}
+.login-header h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--main-blue-dark);
+    margin-bottom: 0.2rem;
+}
+.login-header small { color: #444; }
+.form-label {
+    color: var(--main-blue-dark);
+    font-weight: 600;
+}
+.form-control {
+    border-radius: 10px;
+    font-size: 1.05em;
+    color: var(--contrast-text);
+    background: #fff;
+    border: 1.5px solid var(--main-blue-dark);
+    transition: box-shadow 0.3s, border-color 0.3s;
+}
+.form-control:focus, .form-control.active-voice {
+    border-color: #1e90ff;
+    box-shadow: 0 0 0 3px #1e90ff55;
+    outline: none;
+}
+.btn-primary {
+    background: var(--main-blue-dark);
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 1.1em;
+    transition: background 0.2s;
+    color: #fff;
+}
+.btn-primary:hover, .btn-primary:focus {
+    background: var(--main-blue);
+}
+.access-links {
+    margin-top: 1.2rem;
+    text-align: center;
+}
+.access-links a {
+    color: var(--main-blue-dark);
+    text-decoration: underline;
+    font-size: 0.98em;
+    margin: 0 0.5em;
+}
+
+
+/* Estilos de las Secciones del dashboard */
+.dashboard-section {
+    background: var(--card-bg);
+    border-radius: 18px;
+    box-shadow: var(--card-shadow);
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+.section-title {
+    color: var(--main-blue-dark);
+    font-size: 1.8rem;
+    font-weight: 600;
+    border-bottom: 2px solid var(--main-blue-light);
+    padding-bottom: 0.5rem;
+    margin-bottom: 0; /* Ajustado para el botón de toggle */
+}
+
+/* Botón para ocultar/mostrar sección */
+.toggle-section-btn {
+    background: none;
+    border: 1px solid var(--main-blue-dark);
+    color: var(--main-blue-dark);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, color 0.2s, transform 0.3s ease;
+}
+.toggle-section-btn:hover {
+    background: var(--main-blue-dark);
+    color: var(--text-light);
+    transform: rotate(90deg);
+}
+.toggle-section-btn .fa-eye-slash {
+    transform: rotate(0deg);
+    transition: transform 0.3s ease;
+}
+.toggle-section-btn.active .fa-eye-slash {
+    transform: rotate(-180deg); /* Icono de ojo abierto */
+}
+.toggle-section-btn.active {
+    background: var(--main-blue-dark);
+    color: var(--text-light);
+}
+
+/* Contenido de la sección que se oculta/muestra */
+.section-content {
+    max-height: 1000px; /* Valor grande para transición de altura */
+    overflow: hidden;
+    transition: max-height 0.5s ease-out, opacity 0.5s ease-out;
+    opacity: 1;
+    padding-top: 1.5rem; /* Espacio entre título y contenido */
+}
+.hidden-section .section-content {
+    max-height: 0;
+    opacity: 0;
+    padding-top: 0;
+}
+
+
+/* Cuadrícula de estadísticas */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+}
+.stat-card {
+    background: var(--main-blue-light);
+    color: var(--text-light);
+    border-radius: 15px;
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease-in-out;
+}
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+.stat-icon {
+    font-size: 3em;
+    margin-bottom: 0.5rem;
+    color: #fff;
+}
+.stat-card h3 {
+    font-size: 1.3em;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #fff;
+}
+.stat-value {
+    font-size: 2.5em;
+    font-weight: 700;
+    color: #fff;
+}
+
+/* Contenedor del gráfico */
+.chart-container {
+    position: relative;
+    height: 400px; /* Altura fija para el gráfico */
+    width: 100%;
+}
+
+/* Lista de actividad reciente */
+#activity-list .list-group-item {
+    border-radius: 10px;
+    margin-bottom: 8px;
+    background-color: var(--card-bg);
+    border: 1px solid var(--main-blue-light);
+    color: var(--contrast-text);
+}
+
+/* Pie de página (común para todas las páginas con footer) */
+.main-footer {
+    background: var(--main-blue-dark);
+    color: var(--text-light);
+    text-align: center;
+    padding: 1rem 0;
+    margin-top: auto; /* Empuja el footer hacia abajo */
+}
+.main-footer audio {
+    width: 80%;
+    max-width: 400px;
+    margin-top: 10px;
+}
+
+/* Estilos de los botones flotantes (FAB) - Parte inferior derecha */
+.fab-btn {
+    position: fixed;
+    background: var(--main-blue-dark);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 68px;
+    height: 68px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    box-shadow: 0 4px 16px rgba(72,125,169,0.18);
+    cursor: pointer;
+    z-index: 999;
+    transition: background 0.3s;
+    right: 30px; /* Posición fija a la derecha */
+}
+/* Ajuste de posición vertical para cada botón */
+.fab-mic { bottom: 30px; }
+.fab-speaker { bottom: 120px; }
+.fab-access { bottom: 210px; }
+.fab-dark { bottom: 300px; }
+.fab-large { bottom: 390px; }
+
+.fab-btn:hover, .fab-btn:focus {
+    background: var(--main-blue);
+}
+.fab-btn .tooltip-fab {
+    visibility: hidden;
+    opacity: 0;
+    width: max-content;
+    background: #222;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 7px 16px;
+    position: absolute;
+    right: 110%;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1000;
+    font-size: 1.1em;
+    transition: opacity 0.2s;
+    pointer-events: none;
+    white-space: nowrap;
+}
+.fab-btn:focus .tooltip-fab,
+.fab-btn:hover .tooltip-fab {
+    visibility: visible;
+    opacity: 1;
+}
+.voice-highlight {
+    outline: 4px solid #1e90ff !important;
+    box-shadow: 0 0 0 6px #1e90ff55 !important;
+    transition: outline 0.2s, box-shadow 0.2s;
+}
+
+/* Estilos para subtítulos en vivo */
+#live-captions {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 0;
+    background: rgba(52, 92, 124, 0.97);
+    color: #fff;
+    font-size: 1.15em;
+    padding: 0.7em 2.5em 0.7em 2.5em;
+    text-align: center;
+    z-index: 900;
+    min-height: 2.2em;
+    letter-spacing: 0.5px;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    box-shadow: 0 -2px 12px rgba(72,125,169,0.13);
+    display: block;
+    pointer-events: none;
+    max-width: calc(100vw - 340px);
+}
+@media (max-width: 900px) {
+    #live-captions {
+        max-width: 100vw;
+        font-size: 1em;
+        padding-right: 1em;
+    }
+}
+
+/* Modo oscuro */
+body.dark-mode {
+    --contrast-bg: #23272f;
+    --contrast-text: #fff;
+    background: linear-gradient(135deg, #23272f 0%, #487DA9 100%);
+    color: var(--contrast-text);
+    --nav-bg-color: #1a1e24; /* Color de navegación en modo oscuro */
+
+    /* Colores de estado mejorados para modo oscuro */
+    --status-pending-bg: #ffeb3b;   /* Amarillo más claro */
+    --status-pending-text: #343a40;
+    --status-in-progress-bg: #00bcd4; /* Azul cian más claro */
+    --status-in-progress-text: #fff;
+    --status-completed-bg: #4caf50; /* Verde más claro */
+    --status-completed-text: #fff;
+    --status-cancelled-bg: #f44336; /* Rojo más claro */
+    --status-cancelled-text: #fff;
+
+    /* Modo oscuro para técnicos */
+    --technician-card-bg: #2d3440;
+    --technician-card-border: #444;
+    --technician-name-color: var(--main-blue-light);
+    --technician-specialty-color: #a0aec0;
+    --technician-contact-color: #a0aec0;
+
+    /* Modo oscuro para tickets */
+    --ticket-card-bg: #2d3440;
+    --ticket-card-border: #444;
+    --ticket-title-color: var(--main-blue-light);
+    --ticket-meta-color: #a0aec0;
+
+    /* Modo oscuro para reportes */
+    --report-summary-bg: #2d3440;
+    --report-summary-border: #444;
+    --report-value-color: var(--main-blue-light);
+
+    /* Modo oscuro para configuración */
+    --setting-item-bg: #2d3440;
+    --setting-item-border: #444;
+    --setting-label-color: var(--main-blue-light);
+
+    /* Modo oscuro para clientes */
+    --client-card-bg: #2d3440;
+    --client-card-border: #444;
+    --client-name-color: var(--main-blue-light);
+    --client-meta-color: #a0aec0;
+
+    /* Modo oscuro para servicios */
+    --service-card-bg: #2d3440;
+    --service-card-border: #444;
+    --service-title-color: var(--main-blue-light);
+    --service-description-color: #a0aec0;
+}
+body.dark-mode .main-header {
+    background: var(--nav-bg-color);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+body.dark-mode .main-header .page-title {
+    color: #fff;
+}
+body.dark-mode .hamburger-btn {
+    color: #fff;
+}
+body.dark-mode .main-nav .nav-link, body.dark-mode .main-nav .btn {
+    color: #a0aec0;
+}
+body.dark-mode .main-nav .nav-link:hover, body.dark-mode .main-nav .btn:hover {
+    background: #345c7c;
+    color: #fff;
+}
+body.dark-mode .dashboard-section, body.dark-mode .login-container {
+    background: #2d3440;
+    box-shadow: 0 6px 32px rgba(0,0,0,0.2);
+}
+body.dark-mode .section-title {
+    color: #7faed6;
+    border-color: #487DA9;
+}
+body.dark-mode .stat-card {
+    background: #487DA9;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+body.dark-mode #activity-list .list-group-item {
+    background-color: #2d3440;
+    border-color: #487DA9;
+    color: #fff;
+}
+body.dark-mode .main-footer {
+    background: #1a1e24;
+}
+body.dark-mode .fab-btn {
+    background: var(--main-blue);
+}
+body.dark-mode .fab-btn:hover {
+    background: var(--main-blue-light);
+}
+body.dark-mode .form-control {
+    background: #2d3440;
+    color: #fff;
+    border-color: #7faed6;
+}
+body.dark-mode .form-label {
+    color: #7faed6;
+}
+body.dark-mode .btn-primary {
+    background: var(--main-blue);
+}
+body.dark-mode .btn-primary:hover, body.dark-mode .btn-primary:focus {
+    background: var(--main-blue-light);
+    color: #23272f;
+}
+body.dark-mode .toggle-section-btn {
+    border-color: #7faed6;
+    color: #7faed6;
+}
+body.dark-mode .toggle-section-btn:hover, body.dark-mode .toggle-section-btn.active {
+    background: #7faed6;
+    color: #23272f;
+}
+
+
+/* Texto grande */
+body.large-text .login-header .app-logo {
+    width: 260px;
+    height: 260px;
+}
+body.large-text, body.large-text .login-container, body.large-text .form-label, body.large-text .form-control, body.large-text .btn-primary, body.large-text .access-links {
+    font-size: 1.25em !important;
+}
+body.large-text .login-header h1, body.large-text .main-header .page-title {
+    font-size: 2.7rem;
+}
+body.large-text .main-nav .nav-link, body.large-text .main-nav .btn {
+    font-size: 1.25em;
+}
+body.large-text .section-title {
+    font-size: 2.2rem;
+}
+body.large-text .stat-card h3 {
+    font-size: 1.5em;
+}
+body.large-text .stat-value {
+    font-size: 3em;
+}
+body.large-text #activity-list .list-group-item {
+    font-size: 1.1em;
+}
+body.large-text .main-footer p {
+    font-size: 1.1em;
+}
+body.large-text #live-captions {
+    font-size: 1.35em;
+}
+
+/* Estilos para el overlay de carga */
+#loadingOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    color: white;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    text-align: center;
+}
+#loadingOverlay .fa-spinner {
+    margin-bottom: 20px;
+    animation: spin 1.5s linear infinite;
+}
+#loadingOverlay h2 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+#loadingOverlay p {
+    font-size: 1.4em;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Accesibilidad: Outline para elementos enfocados */
+:focus-visible {
+    outline: 3px solid #ffb700 !important;
+    outline-offset: 2px;
+}
+
+/* Ocultar visualmente pero mantener para lectores de pantalla */
+.visually-hidden {
+    position: absolute !important;
+    height: 1px; width: 1px;
+    overflow: hidden;
+    clip: rect(1px, 1px, 1px, 1px);
+    white-space: nowrap;
+}
+
+/* Media queries para responsividad */
+@media (max-width: 768px) {
+    .main-header .container {
+        flex-direction: row;
+        justify-content: space-between;
+    }
+    .main-nav .nav-list {
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 15px;
+    }
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    .fab-btn {
+        width: 55px;
+        height: 55px;
+        font-size: 28px;
+        right: 15px;
+    }
+    .fab-mic { bottom: 15px; }
+    .fab-speaker { bottom: 80px; }
+    .fab-access { bottom: 145px; }
+    .fab-dark { bottom: 210px; }
+    .fab-large { bottom: 275px; }
+    .fab-btn .tooltip-fab {
+        right: 105%;
+        padding: 5px 10px;
+        font-size: 0.9em;
+    }
+    #live-captions {
+        max-width: 100vw;
+        font-size: 0.95em;
+        padding: 0.5em 1em;
+    }
+    .login-header .app-logo {
+        width: 180px; /* Más pequeño para móviles */
+        height: 180px;
+    }
+    body.large-text .login-header .app-logo {
+        width: 220px;
+        height: 220px;
+    }
+}
+
+/* --- Estilos específicos para la vista de Programaciones por Día --- */
+.program-cards-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Columnas fluidas */
+    gap: 25px; /* Espacio entre las tarjetas */
+    padding: 1rem;
+}
+
+.program-card {
+    background: var(--program-card-bg);
+    border-radius: 18px;
+    box-shadow: var(--card-shadow);
+    padding: 1.5rem;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    border: 1px solid var(--program-card-border);
+}
+.program-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--program-card-hover-shadow);
+}
+
+.program-card-header {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--main-blue-dark);
+    margin-bottom: 1rem;
+    border-bottom: 2px solid var(--main-blue-light);
+    padding-bottom: 0.5rem;
+}
+
+.program-list .list-group-item {
+    background-color: var(--agenda-item-bg);
+    border: 1px solid var(--agenda-item-border);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column; /* Apilar contenido */
+    gap: 0.5rem;
+}
+.program-list .list-group-item:last-child {
+    margin-bottom: 0;
+}
+
+.program-item-title {
+    font-weight: 600;
+    color: var(--main-blue-dark);
+    margin-bottom: 0.2rem;
+    font-size: 1.1em;
+}
+.program-item-meta {
+    font-size: 0.9em;
+    color: #666;
+}
+
+/* Botón "Ver Detalle" dentro de la lista de programas */
+.program-item-details-btn {
+    background: var(--main-blue);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-size: 0.9em;
+    font-weight: 500;
+    margin-top: 0.8rem;
+    align-self: flex-end; /* Alinearlo a la derecha dentro de la columna */
+    transition: background 0.2s ease-in-out;
+}
+.program-item-details-btn:hover {
+    background: var(--main-blue-dark);
+}
+
+
+/* Modal de Detalles de la Visita */
+.visit-detail-modal .modal-content {
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    background: var(--card-bg);
+    color: var(--contrast-text);
+}
+.visit-detail-modal .modal-header {
+    background: var(--main-blue-dark);
+    color: var(--text-light);
+    border-top-left-radius: 18px;
+    border-top-right-radius: 18px;
+    border-bottom: none;
+    padding: 1.5rem;
+}
+.visit-detail-modal .modal-header .modal-title {
+    color: var(--text-light);
+    font-weight: 700;
+    font-size: 1.8rem;
+}
+.visit-detail-modal .modal-header .btn-close {
+    background-color: var(--text-light); /* Para que el icono sea visible */
+    opacity: 1;
+    filter: invert(1); /* Para que el icono sea blanco */
+}
+.visit-detail-modal .modal-body {
+    padding: 2rem;
+}
+.visit-detail-modal .modal-body p {
+    margin-bottom: 0.8rem;
+    font-size: 1.05em;
+    line-height: 1.6;
+}
+.visit-detail-modal .modal-body strong {
+    color: var(--main-blue-dark);
+}
+.visit-detail-modal .products-list {
+    list-style: none;
+    padding-left: 0;
+    margin-top: 0.5rem;
+}
+.visit-detail-modal .products-list li {
+    background-color: #e9f5ff; /* Un azul muy claro */
+    border: 1px solid #cce7ff;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.95em;
+}
+.visit-detail-modal .products-list li strong {
+    color: var(--main-blue-dark);
+}
+.visit-detail-modal .modal-footer {
+    border-top: 1px solid var(--calendar-border);
+    padding: 1.5rem 2rem;
+    background: var(--card-bg);
+    border-bottom-left-radius: 18px;
+    border-bottom-right-radius: 18px;
+}
+.visit-detail-modal .btn-map {
+    background: linear-gradient(45deg, #007bff, #0056b3); /* Gradiente azul */
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 0.8rem 1.8rem;
+    font-size: 1.1em;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.visit-detail-modal .btn-map:hover {
+    background: linear-gradient(45deg, #0056b3, #007bff);
+    box-shadow: 0 6px 15px rgba(0, 123, 255, 0.4);
+    transform: translateY(-2px);
+}
+.visit-detail-modal .btn-map i {
+    font-size: 1.2em;
+}
+
+/* Colores de estado para los badges */
+.status-badge {
+    padding: 0.4em 0.8em;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 0.85em;
+    display: inline-block; /* Asegurar que el padding y color se apliquen bien */
+}
+.status-pendiente {
+    background-color: var(--status-pending-bg);
+    color: var(--status-pending-text);
+}
+.status-en-progreso {
+    background-color: var(--status-in-progress-bg);
+    color: var(--status-in-progress-text);
+}
+.status-completado {
+    background-color: var(--status-completed-bg);
+    color: var(--status-completed-text);
+}
+.status-cancelado {
+    background-color: var(--status-cancelled-bg);
+    color: var(--status-cancelled-text);
+}
+
+
+/* Modo oscuro para la vista de Programaciones por Día */
+body.dark-mode .program-card {
+    background: #2d3440;
+    border-color: #444;
+    box-shadow: 0 6px 32px rgba(0,0,0,0.2);
+}
+body.dark-mode .program-card:hover {
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+}
+body.dark-mode .program-card-header {
+    color: var(--main-blue-light);
+    border-color: var(--main-blue);
+}
+body.dark-mode .program-list .list-group-item {
+    background-color: #23272f;
+    border-color: #444;
+    color: var(--contrast-text);
+}
+body.dark-mode .program-item-title {
+    color: var(--main-blue-light);
+}
+body.dark-mode .program-item-meta {
+    color: #aaa;
+}
+body.dark-mode .program-item-details-btn {
+    background: var(--main-blue-light);
+    color: var(--text-dark);
+}
+body.dark-mode .program-item-details-btn:hover {
+    background: var(--main-blue);
+    color: var(--text-light);
+}
+
+body.dark-mode .visit-detail-modal .products-list li {
+    background-color: #3a414e; /* Fondo más oscuro para productos */
+    border-color: #487DA9;
+    color: var(--contrast-text);
+}
+body.dark-mode .visit-detail-modal .products-list li strong {
+    color: var(--main-blue-light);
+}
+
+/* --- Estilos específicos para la sección de Técnicos --- */
+.technician-cards-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+    padding: 1rem;
+}
+
+.technician-card {
+    background: var(--technician-card-bg);
+    border-radius: 18px;
+    box-shadow: var(--card-shadow);
+    padding: 1.5rem;
+    text-align: center;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    border: 1px solid var(--technician-card-border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.technician-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--technician-card-hover-shadow);
+}
+
+.technician-photo {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 1rem;
+    border: 4px solid var(--main-blue-light);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.technician-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--technician-name-color);
+    margin-bottom: 0.5rem;
+}
+
+.technician-specialty {
+    font-size: 1.1em;
+    color: var(--technician-specialty-color);
+    margin-bottom: 1rem;
+    font-style: italic;
+}
+
+.technician-contact-info {
+    font-size: 0.95em;
+    color: var(--technician-contact-color);
+    text-align: left;
+    width: 100%;
+    padding: 0 10px;
+}
+.technician-contact-info p {
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.technician-contact-info i {
+    color: var(--main-blue);
+}
+
+.technician-bio {
+    font-size: 0.9em;
+    color: #555;
+    margin-top: 1rem;
+    text-align: justify;
+    line-height: 1.5;
+}
+
+/* Modo oscuro para la sección de técnicos */
+body.dark-mode .technician-card {
+    background: var(--technician-card-bg);
+    border-color: var(--technician-card-border);
+    box-shadow: 0 6px 32px rgba(0,0,0,0.2);
+}
+body.dark-mode .technician-card:hover {
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+}
+body.dark-mode .technician-photo {
+    border-color: var(--main-blue);
+}
+body.dark-mode .technician-name {
+    color: var(--technician-name-color);
+}
+body.dark-mode .technician-specialty {
+    color: var(--technician-specialty-color);
+}
+body.dark-mode .technician-contact-info {
+    color: var(--technician-contact-color);
+}
+body.dark-mode .technician-contact-info i {
+    color: var(--main-blue-light);
+}
+body.dark-mode .technician-bio {
+    color: #bbb;
+}
+
+/* --- Estilos específicos para la sección de Tickets --- */
+.ticket-cards-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+    padding: 1rem;
+}
+
+.ticket-card {
+    background: var(--ticket-card-bg);
+    border-radius: 18px;
+    box-shadow: var(--card-shadow);
+    padding: 1.5rem;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    border: 1px solid var(--ticket-card-border);
+}
+.ticket-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--ticket-card-hover-shadow);
+}
+
+.ticket-number {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--ticket-title-color);
+    margin-bottom: 0.5rem;
+}
+
+.ticket-subject {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 0.8rem;
+}
+
+.ticket-meta {
+    font-size: 0.9em;
+    color: var(--ticket-meta-color);
+    margin-bottom: 0.4rem;
+}
+.ticket-meta strong {
+    color: var(--main-blue-dark);
+}
+
+/* Modo oscuro para tickets */
+body.dark-mode .ticket-card {
+    background: var(--ticket-card-bg);
+    border-color: var(--ticket-card-border);
+    box-shadow: 0 6px 32px rgba(0,0,0,0.2);
+}
+body.dark-mode .ticket-card:hover {
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+}
+body.dark-mode .ticket-number {
+    color: var(--ticket-title-color);
+}
+body.dark-mode .ticket-subject {
+    color: var(--contrast-text);
+}
+body.dark-mode .ticket-meta {
+    color: var(--ticket-meta-color);
+}
+body.dark-mode .ticket-meta strong {
+    color: var(--main-blue-light);
+}
+
+/* --- Estilos específicos para la sección de Reportes --- */
+.report-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 25px;
+    margin-bottom: 2rem;
+}
+
+.report-summary-card {
+    background: var(--report-summary-bg);
+    border-radius: 18px;
+    box-shadow: var(--card-shadow);
+    padding: 1.5rem;
+    text-align: center;
+    border: 1px solid var(--report-summary-border);
+}
+.report-summary-card h4 {
+    font-size: 1.2rem;
+    color: var(--main-blue-dark);
+    margin-bottom: 0.5rem;
+}
+.report-summary-card .value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--report-value-color);
+}
+
+/* Modo oscuro para reportes */
+body.dark-mode .report-summary-card {
+    background: var(--report-summary-bg);
+    border-color: var(--report-summary-border);
+    box-shadow: 0 6px 32px rgba(0,0,0,0.2);
+}
+body.dark-mode .report-summary-card h4 {
+    color: var(--main-blue-light);
+}
+body.dark-mode .report-summary-card .value {
+    color: var(--report-value-color);
+}
+
+/* --- Estilos específicos para la sección de Configuración --- */
+.settings-form .form-group {
+    background: var(--setting-item-bg);
+    border: 1px solid var(--setting-item-border);
+    border-radius: 12px;
+    padding: 1.2rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.settings-form .form-group label {
+    font-weight: 600;
+    color: var(--setting-label-color);
+    margin-bottom: 0.5rem;
+}
+.settings-form .form-control,
+.settings-form .form-select {
+    border-radius: 8px;
+    border: 1px solid var(--main-blue-light);
+    padding: 0.75rem 1rem;
+    font-size: 1em;
+    color: var(--contrast-text);
+    background-color: #fff;
+}
+.settings-form .form-control:focus,
+.settings-form .form-select:focus {
+    border-color: var(--main-blue);
+    box-shadow: 0 0 0 0.25rem rgba(72,125,169,0.25);
+}
+.settings-form .form-check-input:checked {
+    background-color: var(--main-blue);
+    border-color: var(--main-blue);
+}
+.settings-form .btn-save-settings {
+    background: var(--main-blue-dark);
+    border: none;
+    border-radius: 10px;
+    padding: 0.8rem 2rem;
+    font-size: 1.1em;
+    font-weight: 600;
+    color: white;
+    transition: background 0.2s;
+}
+.settings-form .btn-save-settings:hover {
+    background: var(--main-blue);
+}
+
+/* Modo oscuro para configuración */
+body.dark-mode .settings-form .form-group {
+    background: var(--setting-item-bg);
+    border-color: var(--setting-item-border);
+    box-shadow: 0 6px 32px rgba(0,0,0,0.2);
+}
+body.dark-mode .settings-form .form-group label {
+    color: var(--setting-label-color);
+}
+body.dark-mode .settings-form .form-control,
+body.dark-mode .settings-form .form-select {
+    background-color: #23272f;
+    color: var(--contrast-text);
+    border-color: #487DA9;
+}
+body.dark-mode .settings-form .form-control:focus,
+body.dark-mode .settings-form .form-select:focus {
+    border-color: var(--main-blue-light);
+    box-shadow: 0 0 0 0.25rem rgba(127,174,214,0.25);
+}
+body.dark-mode .settings-form .form-check-input:checked {
+    background-color: var(--main-blue-light);
+    border-color: var(--main-blue-light);
+}
+body.dark-mode .settings-form .btn-save-settings {
+    background: var(--main-blue-light);
+    color: var(--text-dark);
+}
+body.dark-mode .settings-form .btn-save-settings:hover {
+    background: var(--main-blue);
+    color: var(--text-light);
+}
+
+/* --- Estilos específicos para la sección de Clientes --- */
+.client-cards-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+    padding: 1rem;
+}
+
+.client-card {
+    background: var(--client-card-bg);
+    border-radius: 18px;
+    box-shadow: var(--card-shadow);
+    padding: 1.5rem;
+    text-align: center;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    border: 1px solid var(--client-card-border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.client-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--client-card-hover-shadow);
+}
+
+.client-photo {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 1rem;
+    border: 3px solid var(--main-blue-light);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.client-name {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--client-name-color);
+    margin-bottom: 0.5rem;
+}
+
+.client-meta {
+    font-size: 0.95em;
+    color: var(--client-meta-color);
+    margin-bottom: 0.4rem;
+}
+.client-meta i {
+    color: var(--main-blue);
+    margin-right: 5px;
+}
+
+/* Modo oscuro para clientes */
+body.dark-mode .client-card {
+    background: var(--client-card-bg);
+    border-color: var(--client-card-border);
+    box-shadow: 0 6px 32px rgba(0,0,0,0.2);
+}
+body.dark-mode .client-card:hover {
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+}
+body.dark-mode .client-photo {
+    border-color: var(--main-blue);
+}
+body.dark-mode .client-name {
+    color: var(--client-name-color);
+}
+body.dark-mode .client-meta {
+    color: var(--client-meta-color);
+}
+body.dark-mode .client-meta i {
+    color: var(--main-blue-light);
+}
+
+/* --- Estilos específicos para la sección de Servicios --- */
+.service-cards-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+    padding: 1rem;
+}
+
+.service-card {
+    background: var(--service-card-bg);
+    border-radius: 18px;
+    box-shadow: var(--card-shadow);
+    padding: 1.5rem;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    border: 1px solid var(--service-card-border);
+}
+.service-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--service-card-hover-shadow);
+}
+
+.service-icon {
+    font-size: 2.5rem;
+    color: var(--main-blue);
+    margin-bottom: 1rem;
+}
+
+.service-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--service-title-color);
+    margin-bottom: 0.8rem;
+}
+
+.service-description {
+    font-size: 1em;
+    color: var(--service-description-color);
+    line-height: 1.6;
+}
+
+/* Modo oscuro para servicios */
+body.dark-mode .service-card {
+    background: var(--service-card-bg);
+    border-color: var(--service-card-border);
+    box-shadow: 0 6px 32px rgba(0,0,0,0.2);
+}
+body.dark-mode .service-card:hover {
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+}
+body.dark-mode .service-icon {
+    color: var(--main-blue-light);
+}
+body.dark-mode .service-title {
+    color: var(--service-title-color);
+}
+body.dark-mode .service-description {
+    color: var(--service-description-color);
+}
+
+/* Estilos para botones con estado de carga */
+.btn.loading {
+    position: relative;
+    color: transparent !important; /* Oculta el texto original */
+    pointer-events: none; /* Deshabilita clics mientras carga */
+}
+
+.btn.loading::before {
+    content: "PreySop..."; /* Texto de carga */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white; /* Color del texto de carga */
+    font-weight: 600;
+    font-size: 0.9em;
+    white-space: nowrap;
+}
+
+.btn.loading .fas.fa-spinner {
+    display: inline-block;
+    margin-right: 8px; /* Espacio entre spinner y texto */
+    animation: spin 1.5s linear infinite;
+}
+
+/* Ocultar iconos originales cuando el botón está cargando */
+.btn.loading i:not(.fa-spinner) {
+    display: none;
+}
