@@ -31,6 +31,7 @@ const userInput = document.getElementById('username');
 const passInput = document.getElementById('password');
 const btnLogin = document.getElementById('btnLogin');
 const btnRecover = document.getElementById('btnRecover');
+const loginForm = document.getElementById('loginForm'); // *** NUEVA REFERENCIA ***
 
 // Referencia al botón de cerrar sesión (estará en todas las páginas con nav)
 const logoutBtn = document.getElementById('logoutBtn');
@@ -1021,13 +1022,15 @@ if ('webkitSpeechRecognition' in window) {
                 isListening = true;
                 btnMic.classList.add('listening');
                 highlightField("mic");
-                showCaption("Activando micrófono..."); // Muestra el caption inmediatamente
+                showCaption("Activando reconocimiento de voz..."); // *** CAMBIO 1: Mensaje más claro ***
 
                 noSpeechCount = 0; // Resetear contador al activar
                 speechDetectedInSession = false; // Resetear al iniciar nueva sesión
 
                 audioContext.resume().then(() => {
                     recognition.start();
+                    // *** CAMBIO 2: Mensaje de activación explícito y en masculino ***
+                    speakText("Reconocimiento de voz activado.");
                 }).catch(e => console.error("Error al resumir AudioContext en btnMic click:", e));
             }
         });
@@ -1036,7 +1039,7 @@ if ('webkitSpeechRecognition' in window) {
     // Evento que se dispara cuando el reconocimiento de voz ha comenzado a escuchar audio.
     recognition.onaudiostart = function() {
         console.log("Audio capturado por el reconocimiento.");
-        // Solo muestra el caption, NO LLAMA A speakText aquí para evitar interferencias iniciales.
+        // *** CAMBIO 3: Solo muestra el caption, NO LLAMA A speakText aquí ***
         if (isListening) {
             showCaption("Escuchando. Diga 'comandos' para ayuda, o lo que desea realizar.");
         }
@@ -1062,7 +1065,7 @@ if ('webkitSpeechRecognition' in window) {
 
         for (let i = event.resultIndex; i < event.results.length; ++i) {
             if (event.results[i].isFinal) {
-                finalTranscript += event.results[i][0].transcript;
+                finalTranscript += event.results[0][0].transcript; // *** CORRECCIÓN: Usar event.results[0][0] para el transcript final ***
             } else {
                 interimTranscript += event.results[i][0].transcript;
             }
@@ -1157,13 +1160,14 @@ if ('webkitSpeechRecognition' in window) {
                         showCaption("Campo contraseña activado. Diga la contraseña.");
                     }
                     commandHandled = true;
-                } else if (lower.includes("iniciar sesión") && btnLogin) {
+                } else if (lower.includes("iniciar sesión") && loginForm) { // *** CAMBIO 4: Usar loginForm y dispatchEvent ***
                     highlightField("login");
-                    btnLogin.focus();
+                    if (btnLogin) btnLogin.focus(); // Mantener el focus visual si el botón existe
                     showCaption("Botón Iniciar sesión activado.");
-                    showButtonLoading(btnLogin); // Mostrar carga
+                    if (btnLogin) showButtonLoading(btnLogin); // Mostrar carga en el botón
                     speakText("Iniciando sesión.", false, () => {
-                        setTimeout(() => { btnLogin.click(); }, 500); 
+                        // Disparar el evento de submit del formulario directamente
+                        loginForm.dispatchEvent(new Event('submit')); 
                     });
                     commandHandled = true;
                 } else if ((lower.includes("recuperar acceso") || lower.includes("olvidé mi contraseña")) && btnRecover) {
@@ -1624,7 +1628,6 @@ if ('webkitSpeechRecognition' in window) {
                 setTimeout(() => {
                     audioContext.resume().then(() => {
                         recognition.start();
-                        console.log("Reconocimiento reiniciado desde onend.");
                     }).catch(e => console.error("Error al reanudar AudioContext en onend:", e));
                 }, 500); // Pequeño retraso para evitar ciclos rápidos
             }
@@ -1715,8 +1718,8 @@ function resetAccessibility() {
 // --- Lógica Específica de la Página de Login (index.html) ---
 // Solo se ejecuta si el body tiene el ID 'login-page'
 if (document.body.id === 'login-page') {
-    if (document.getElementById('loginForm')) {
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    if (loginForm) { // Asegurarse de que el formulario existe
+        loginForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             const usuarioInputVal = userInput ? userInput.value.trim() : '';
             const passwordInputVal = passInput ? passInput.value.trim() : '';
@@ -1746,7 +1749,7 @@ if (document.body.id === 'dashboard-page') {
         upcomingAppointments: reportsData.pendingTickets + reportsData.inProgressTickets, // Citas pendientes y en progreso
         activeTechnicians: technicians.length,
         starlinkInstalls: reportsData.servicesByCategory["Instalación Starlink"],
-        serviceCategories: reportsData.servicesByCategory,
+        serviceCategories: reportsData.serviceByCategory,
         recentActivity: [
             "Nueva instalación de Starlink para Cliente A. (Hace 2h)",
             "Mantenimiento de fibra óptica en Zona B. (Hace 5h)",
